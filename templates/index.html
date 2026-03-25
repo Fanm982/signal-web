@@ -392,12 +392,14 @@ function showReport(html){
   document.getElementById('compare-btn').style.display='none';
   document.getElementById('page-upload').style.display='none';
   document.getElementById('page-report').style.display='block';
+  document.querySelector('.top-nav').style.display='none';
   window.scrollTo(0,0);
 }
 
 function backToUpload(){
   document.getElementById('page-report').style.display='none';
   document.getElementById('page-upload').style.display='flex';
+  document.querySelector('.top-nav').style.display='flex';
   document.getElementById('analyze-btn').disabled=false;
   document.getElementById('progress-wrap').style.display='none';
   document.getElementById('progress-fill').style.width='0%';
