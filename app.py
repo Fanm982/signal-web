@@ -1,31 +1,46 @@
-import os, uuid, pathlib
-from flask import Flask, request, jsonify, render_template, Response
+import os, uuid, requests as req_lib
+from flask import Flask, request, jsonify, render_template
 from analyzer_core import get_chat_list, run_analysis
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
-app.config["MAX_CONTENT_LENGTH"] = 150 * 1024 * 1024  # 150 MB
+app.config["MAX_CONTENT_LENGTH"] = 150 * 1024 * 1024
 
-# ── In-memory stores ──────────────────────────────────────────
-_store        = {}   # sid → file_bytes
-_html_cache   = {}   # sid:chat_id → report html  (avoid re-analysis)
-MAX_SESSIONS  = 50
+# ── Supabase config (set as Railway env vars, see README) ─────
+SUPA_URL    = os.environ.get("SUPABASE_URL", "https://zjhufokqykymkbsqwfxl.supabase.co")
+SUPA_KEY    = os.environ.get("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqaHVmb2txeWt5bWtic3F3ZnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MzQ1NzQsImV4cCI6MjA4NDQxMDU3NH0.cdAQlSkE1krLBiSdBhrqm-tyE96CRBXQE5qeVgLYdmA")
+SUPA_HEADERS = {
+    "apikey":        SUPA_KEY,
+    "Authorization": f"Bearer {SUPA_KEY}",
+    "Content-Type":  "application/json",
+    "Prefer":        "return=minimal",
+}
 
-# ── Persistent share storage (survives restart) ───────────────
-SHARE_DIR = pathlib.Path("/tmp/signal_shares")
-SHARE_DIR.mkdir(parents=True, exist_ok=True)
+def _db_save(share_id: str, html: str):
+    """Insert report into Supabase."""
+    res = req_lib.post(
+        f"{SUPA_URL}/rest/v1/signal_reports",
+        headers=SUPA_HEADERS,
+        json={"share_id": share_id, "html": html},
+        timeout=10,
+    )
+    res.raise_for_status()
 
-def _save_share(share_id: str, html: str):
-    (SHARE_DIR / f"{share_id}.html").write_text(html, encoding="utf-8")
+def _db_load(share_id: str):
+    """Fetch report from Supabase. Returns html string or None."""
+    res = req_lib.get(
+        f"{SUPA_URL}/rest/v1/signal_reports",
+        headers={**SUPA_HEADERS, "Accept": "application/json"},
+        params={"share_id": f"eq.{share_id}", "select": "html"},
+        timeout=10,
+    )
+    rows = res.json()
+    return rows[0]["html"] if rows else None
 
-def _load_share(share_id: str):
-    p = SHARE_DIR / f"{share_id}.html"
-    return p.read_text(encoding="utf-8") if p.exists() else None
-
-def _evict_old_shares(keep=200):
-    files = sorted(SHARE_DIR.glob("*.html"), key=lambda f: f.stat().st_mtime)
-    for f in files[:-keep]:
-        f.unlink(missing_ok=True)
+# ── In-memory session + html cache ───────────────────────────
+_store      = {}   # sid → file_bytes
+_html_cache = {}   # "sid:chat_id" → html
+MAX_SESSIONS = 50
 
 # ── Routes ────────────────────────────────────────────────────
 @app.route("/")
@@ -55,26 +70,22 @@ def upload():
 
     sid = str(uuid.uuid4())
     _store[sid] = file_bytes
-
-    # Evict oldest sessions
     while len(_store) > MAX_SESSIONS:
-        oldest = next(iter(_store))
-        del _store[oldest]
+        del _store[next(iter(_store))]
 
     return jsonify({"session_id": sid, "chats": chats})
 
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
-    data    = request.get_json(force=True)
-    sid     = data.get("session_id", "")
-    chat_id = data.get("chat_id", "")
+    data      = request.get_json(force=True)
+    sid       = data.get("session_id", "")
+    chat_id   = data.get("chat_id", "")
     cache_key = f"{sid}:{chat_id}"
 
     if sid not in _store:
         return jsonify({"error": "Session abgelaufen — bitte Datei erneut hochladen."}), 400
 
-    # Return cached result if available
     if cache_key in _html_cache:
         return jsonify({"html": _html_cache[cache_key]})
 
@@ -83,10 +94,7 @@ def analyze():
     except Exception as e:
         return jsonify({"error": f"Analyse fehlgeschlagen: {e}"}), 500
 
-    # Cache the result so /share can use it without re-analysis
     _html_cache[cache_key] = html
-
-    # Evict old cache entries (keep last 20)
     if len(_html_cache) > 20:
         del _html_cache[next(iter(_html_cache))]
 
@@ -100,38 +108,42 @@ def share():
     chat_id   = data.get("chat_id", "")
     cache_key = f"{sid}:{chat_id}"
 
-    # Try cache first — avoids needing the session to still be alive
     html = _html_cache.get(cache_key)
 
-    # If not in cache, try re-analysis (session must still be alive)
     if not html:
         if sid not in _store:
-            return jsonify({"error": "Analyse nicht mehr im Cache. Bitte analysiere den Chat nochmal und dann teile den Link."}), 400
+            return jsonify({"error": "Bitte analysiere den Chat zuerst, dann auf 'Link teilen' klicken."}), 400
         try:
             html = run_analysis(_store[sid], chat_id)
             _html_cache[cache_key] = html
         except Exception as e:
             return jsonify({"error": str(e)}), 500
 
-    share_id = str(uuid.uuid4())[:10]
-    _save_share(share_id, html)
-    _evict_old_shares(keep=200)
+    share_id = str(uuid.uuid4()).replace("-", "")[:12]
+
+    try:
+        _db_save(share_id, html)
+    except Exception as e:
+        return jsonify({"error": f"Link konnte nicht gespeichert werden: {e}"}), 500
 
     return jsonify({"share_id": share_id})
 
 
 @app.route("/r/<share_id>")
 def view_report(share_id):
-    # Sanitize share_id to prevent path traversal
-    share_id = share_id.replace("/", "").replace(".", "").replace("\\", "")
-    html = _load_share(share_id)
+    share_id = "".join(c for c in share_id if c.isalnum())
+    try:
+        html = _db_load(share_id)
+    except Exception:
+        html = None
+
     if not html:
         return (
             "<html><body style='font-family:sans-serif;background:#0a0a0a;color:#555;"
             "display:flex;align-items:center;justify-content:center;height:100vh;margin:0'>"
             "<div style='text-align:center'>"
-            "<div style='font-size:2rem;margin-bottom:12px'>📭</div>"
-            "<div style='font-size:1.1rem;color:#888'>Dieser Link ist abgelaufen oder existiert nicht.</div>"
+            "<div style='font-size:2.5rem;margin-bottom:16px'>📭</div>"
+            "<div style='font-size:1.1rem;color:#888'>Dieser Link existiert nicht oder ist abgelaufen.</div>"
             "</div></body></html>"
         ), 404
     return html
