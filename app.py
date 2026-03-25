@@ -8,6 +8,7 @@ app.config["MAX_CONTENT_LENGTH"] = 150 * 1024 * 1024  # 150 MB
 
 # Simple in-memory store — fine for hobby use
 _store = {}
+_reports = {}
 MAX_SESSIONS = 30
 
 @app.route("/")
@@ -58,6 +59,38 @@ def analyze():
         return jsonify({"error": f"Analyse fehlgeschlagen: {e}"}), 500
 
     return jsonify({"html": html})
+
+@app.route("/share", methods=["POST"])
+def share():
+    data    = request.get_json(force=True)
+    sid     = data.get("session_id", "")
+    chat_id = data.get("chat_id", "")
+
+    if sid not in _store:
+        return jsonify({"error": "Session abgelaufen."}), 400
+
+    try:
+        html = run_analysis(_store[sid], chat_id)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    share_id = str(uuid.uuid4())[:8]
+    _reports[share_id] = html
+
+    # Keep max 100 shared reports
+    while len(_reports) > 100:
+        del _reports[next(iter(_reports))]
+
+    return jsonify({"share_id": share_id})
+
+
+@app.route("/r/<share_id>")
+def view_report(share_id):
+    html = _reports.get(share_id)
+    if not html:
+        return "<h2 style='font-family:sans-serif;color:#888;text-align:center;margin-top:20%'>Link abgelaufen oder nicht gefunden.</h2>", 404
+    return html
+
 
 @app.errorhandler(413)
 def too_large(e):

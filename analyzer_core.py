@@ -745,6 +745,28 @@ def run_analysis(file_bytes, chat_id):
   .sub{{font-family:{MONO};font-size:.78rem;color:{MUT};margin-top:10px}}
   details summary::-webkit-details-marker{{display:none}}
   details>summary{{outline:none}}
+  @media print {{
+    body{{background:#fff;color:#111}}
+    .wrap{{max-width:100%;padding:0 16px}}
+    .header{{padding:24px 0 20px}}
+    .eyebrow{{color:#888}}
+    h1{{color:#000}}
+    .sub{{color:#888}}
+    details>summary{{border:1px solid #ddd;border-radius:8px}}
+    details[open]>div{{border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px}}
+    /* cards */
+    div[style*="background:{{CARD}}"]{{background:#f9f9f9!important;border:1px solid #ddd!important}}
+    div[style*="background:#0d0d0d"]{{background:#f5f5f5!important;border:1px solid #ddd!important}}
+    /* bars */
+    div[style*="background:#161616"]{{background:#eee!important}}
+    div[style*="background:#141414"]{{background:#eee!important}}
+    /* text colors */
+    div[style*="color:{{TXT}}"]{{color:#222!important}}
+    div[style*="color:{{MUT}}"]{{color:#666!important}}
+    div[style*="color:{{WHT}}"]{{color:#000!important}}
+    /* hide nav on print */
+    .no-print{{display:none!important}}
+  }}
 </style>
 </head>
 <body>

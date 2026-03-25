@@ -162,8 +162,14 @@
   <div class="report-nav">
     <div class="report-nav-title" id="report-nav-title">Analyse</div>
     <button class="btn-sm" onclick="backToUpload()">← Neu</button>
-    <button class="btn-sm gold" id="dl-btn" onclick="downloadReport()">Herunterladen</button>
+    <button class="btn-sm" id="share-btn" onclick="shareReport()">🔗 Link teilen</button>
+    <button class="btn-sm" onclick="printReport()">📄 Als PDF</button>
+    <button class="btn-sm gold" id="dl-btn" onclick="downloadReport()">⬇ Download</button>
   </div>
+  <div id="share-toast" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+    background:#111;border:1px solid #2e2e2e;color:#ccc;padding:12px 20px;border-radius:10px;
+    font-family:JetBrains Mono,monospace;font-size:.8rem;z-index:999;white-space:nowrap;
+    box-shadow:0 4px 24px rgba(0,0,0,.5)"></div>
   <div id="report-body"></div>
 </div>
 
@@ -356,6 +362,63 @@ function backToUpload() {
 
 function escHtml(s) {
   return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+function printReport() {
+  // Open report in new tab and trigger print there
+  if (!_reportHtml) return;
+  const w = window.open("", "_blank");
+  w.document.write(_reportHtml);
+  w.document.close();
+  w.focus();
+  setTimeout(() => { w.print(); }, 600);
+}
+
+async function shareReport() {
+  if (!_sid || !_chatId) return;
+  const btn = document.getElementById("share-btn");
+  btn.textContent = "…";
+  btn.disabled = true;
+
+  try {
+    const res  = await fetch("/share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: _sid, chat_id: _chatId })
+    });
+    const data = await res.json();
+
+    if (data.error) {
+      showToast("Fehler: " + data.error, "#ff6b6b");
+      return;
+    }
+
+    const url = window.location.origin + "/r/" + data.share_id;
+
+    // Copy to clipboard
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast("🔗 Link kopiert: " + url, "#6bcc88");
+    } catch {
+      // Fallback: show URL for manual copy
+      showToast("Link: " + url + " (bitte manuell kopieren)", "#c9a84c");
+    }
+
+  } catch(e) {
+    showToast("Fehler: " + e.message, "#ff6b6b");
+  } finally {
+    btn.textContent = "🔗 Link teilen";
+    btn.disabled = false;
+  }
+}
+
+function showToast(msg, color) {
+  const t = document.getElementById("share-toast");
+  t.textContent = msg;
+  t.style.color  = color || "#ccc";
+  t.style.display = "block";
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.display = "none"; }, 5000);
 }
 </script>
 </body>
