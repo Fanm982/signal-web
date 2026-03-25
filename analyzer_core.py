@@ -768,26 +768,51 @@ def run_analysis(file_bytes, chat_id):
   details summary::-webkit-details-marker{{display:none}}
   details>summary{{outline:none}}
   @media print {{
-    body{{background:#fff;color:#111}}
-    .wrap{{max-width:100%;padding:0 16px}}
-    .header{{padding:24px 0 20px}}
-    .eyebrow{{color:#888}}
-    h1{{color:#000}}
-    .sub{{color:#888}}
-    details>summary{{border:1px solid #ddd;border-radius:8px}}
-    details[open]>div{{border:1px solid #ddd;border-top:none;border-radius:0 0 8px 8px}}
-    /* cards */
-    div[style*="background:{{CARD}}"]{{background:#f9f9f9!important;border:1px solid #ddd!important}}
-    div[style*="background:#0d0d0d"]{{background:#f5f5f5!important;border:1px solid #ddd!important}}
-    /* bars */
-    div[style*="background:#161616"]{{background:#eee!important}}
-    div[style*="background:#141414"]{{background:#eee!important}}
-    /* text colors */
-    div[style*="color:{{TXT}}"]{{color:#222!important}}
-    div[style*="color:{{MUT}}"]{{color:#666!important}}
-    div[style*="color:{{WHT}}"]{{color:#000!important}}
-    /* hide nav on print */
-    .no-print{{display:none!important}}
+    /* Force dark background to print — needs -webkit-print-color-adjust */
+    * {{
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }}
+    @page {{
+      size: A4 portrait;
+      margin: 12mm 10mm;
+    }}
+    html, body {{
+      background: #0a0a0a !important;
+      color: #cccccc !important;
+      font-size: 11pt;
+      width: 100%;
+    }}
+    .wrap {{
+      max-width: 100% !important;
+      padding: 0 !important;
+    }}
+    /* Prevent content being cut mid-element */
+    div, section, details {{
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }}
+    /* Cards stay dark */
+    details > summary {{
+      background: #111 !important;
+      border: 1px solid #1e1e1e !important;
+    }}
+    /* SVG charts print correctly */
+    svg {{
+      max-width: 100% !important;
+      overflow: visible !important;
+    }}
+    /* Overflow-x tables/bars wrap instead of cutting */
+    div[style*="overflow-x"] {{
+      overflow: visible !important;
+    }}
+    /* Grid layouts stay intact */
+    div[style*="display:grid"] {{
+      grid-template-columns: repeat(auto-fit, minmax(120px,1fr)) !important;
+    }}
+    /* No-print elements hidden */
+    .no-print {{ display: none !important; }}
   }}
 </style>
 </head>

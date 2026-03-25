@@ -132,7 +132,9 @@
   .report-nav-inner::-webkit-scrollbar{display:none}
   .report-nav-title{
     font-weight:700;color:var(--wht);font-size:.9rem;
-    white-space:nowrap;flex-shrink:0;margin-right:4px;
+    white-space:nowrap;flex-shrink:1;min-width:0;
+    overflow:hidden;text-overflow:ellipsis;
+    flex:1;
   }
   .btn-sm{
     padding:7px 13px;
@@ -389,7 +391,6 @@ function showReport(html){
   window.addEventListener('resize',resize);
 
   document.getElementById('report-title').textContent=_chatName||'Analyse';
-  document.getElementById('compare-btn').style.display='none';
   document.getElementById('page-upload').style.display='none';
   document.getElementById('page-report').style.display='block';
   document.querySelector('.top-nav').style.display='none';
@@ -419,8 +420,14 @@ function downloadReport(){
 function printReport(){
   if(!_reportHtml)return;
   const w=window.open('','_blank');
-  w.document.write(_reportHtml);w.document.close();w.focus();
-  setTimeout(()=>w.print(),600);
+  w.document.open();
+  w.document.write(_reportHtml);
+  w.document.close();
+  w.focus();
+  // Wait for fonts + SVGs to render before printing
+  w.onload = () => setTimeout(()=>w.print(), 800);
+  // Fallback if onload already fired
+  setTimeout(()=>{ if(!w.closed) w.print(); }, 1500);
 }
 
 // ── Share ──────────────────────────────────────────────────────
