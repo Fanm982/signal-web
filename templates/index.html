@@ -362,18 +362,32 @@ async function startAnalysis(){
 
 function showReport(html){
   _reportHtml=html;_lastShareId=null;
-  const parser=new DOMParser();const doc=parser.parseFromString(html,'text/html');
-  const wrap=doc.querySelector('.wrap');const body=document.getElementById('report-body');
+
+  // Always use iframe — keeps report CSS isolated from index CSS
+  const body=document.getElementById('report-body');
   body.innerHTML='';
-  if(wrap){
-    const style=doc.querySelector('style');
-    if(style){const s=document.createElement('style');s.textContent=style.textContent;document.head.appendChild(s);}
-    body.appendChild(document.importNode(wrap,true));
-  }else{
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='width:100%;border:none;min-height:100vh;display:block';
-    iframe.srcdoc=html;body.appendChild(iframe);
+
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='width:100%;border:none;height:100vh;display:block;min-height:600px';
+  iframe.scrolling='no';
+  body.appendChild(iframe);
+
+  // Write HTML into iframe
+  iframe.contentDocument.open();
+  iframe.contentDocument.write(html);
+  iframe.contentDocument.close();
+
+  // Auto-resize to content height
+  function resize(){
+    try{
+      const h=iframe.contentDocument.documentElement.scrollHeight;
+      if(h>100)iframe.style.height=h+'px';
+    }catch(e){}
   }
+  iframe.onload=()=>{resize();setTimeout(resize,500);setTimeout(resize,1500);};
+  // Resize on window resize too
+  window.addEventListener('resize',resize);
+
   document.getElementById('report-title').textContent=_chatName||'Analyse';
   document.getElementById('compare-btn').style.display='none';
   document.getElementById('page-upload').style.display='none';
