@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Signal Analyse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:   #0a0a0a; --card: #111; --bd: #1e1e1e;
+    --mut:  #555;    --txt:  #ccc; --wht: #fff;
+    --gold: #c9a84c; --blue: #6b9fff; --grn: #6bcc88; --red: #ff6b6b;
+    --mono: 'JetBrains Mono','Fira Mono',monospace;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    background: var(--bg); color: var(--txt);
+    min-height: 100vh; display: flex; flex-direction: column;
+  }
+
+  /* NAV */
+  nav {
+    padding: 18px 28px; border-bottom: 1px solid var(--bd);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-family: var(--mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+  .nav-hint { font-family: var(--mono); font-size: .7rem; color: var(--mut); }
+
+  /* UPLOAD PAGE */
+  #page-upload {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 40px 20px 80px;
+  }
+  .hero { text-align: center; max-width: 500px; margin-bottom: 36px; }
+  .hero-eyebrow { font-family: var(--mono); font-size: .68rem; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+  .hero h1 { font-size: clamp(2rem,5vw,2.8rem); font-weight: 800; color: var(--wht); letter-spacing: -.03em; line-height: 1.1; margin-bottom: 12px; }
+  .hero p { color: var(--mut); font-size: .9rem; line-height: 1.7; }
+
+  .upload-card { width: 100%; max-width: 500px; background: var(--card); border: 1px solid var(--bd); border-radius: 16px; padding: 28px; }
+
+  /* DROP ZONE */
+  .drop-zone {
+    border: 2px dashed var(--bd); border-radius: 12px;
+    padding: 36px 20px; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .drop-zone:hover, .drop-zone.over { border-color: var(--gold); background: rgba(201,168,76,.04); }
+  .drop-icon { font-size: 2rem; margin-bottom: 10px; }
+  .drop-label { color: var(--txt); font-size: .92rem; margin-bottom: 4px; }
+  .drop-sub { color: var(--mut); font-family: var(--mono); font-size: .72rem; }
+  #file-input { display: none; }
+
+  /* STATUS */
+  .status { margin-top: 14px; font-family: var(--mono); font-size: .78rem; min-height: 18px; text-align: center; }
+  .status.error { color: var(--red); }
+  .status.ok    { color: var(--grn); }
+  .status.info  { color: var(--mut); }
+
+  /* CHAT LIST */
+  #chat-section { display: none; margin-top: 22px; }
+  .chat-section-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .1em; color: var(--mut); font-weight: 600; margin-bottom: 8px; }
+  .chat-type-header { font-size: .65rem; text-transform: uppercase; letter-spacing: .1em; color: var(--mut); opacity: .7; padding: 10px 2px 4px; }
+  .chat-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 9px; cursor: pointer;
+    border: 1px solid transparent; transition: background .12s, border-color .12s;
+    margin-bottom: 3px;
+  }
+  .chat-item:hover { background: rgba(255,255,255,.03); border-color: var(--bd); }
+  .chat-item.selected { background: rgba(201,168,76,.08); border-color: var(--gold); }
+  .badge { font-size: .62rem; font-family: var(--mono); text-transform: uppercase; padding: 2px 7px; border-radius: 999px; flex-shrink: 0; }
+  .badge.contact { background: rgba(107,159,255,.14); color: var(--blue); }
+  .badge.group   { background: rgba(107,204,136,.14); color: var(--grn); }
+  .chat-name { font-size: .88rem; color: var(--txt); flex: 1; }
+
+  /* BUTTON */
+  #analyze-btn {
+    display: none; width: 100%; margin-top: 18px;
+    padding: 13px; background: var(--gold); color: #000;
+    font-family: 'Bricolage Grotesque', sans-serif; font-size: .92rem; font-weight: 700;
+    border: none; border-radius: 10px; cursor: pointer; transition: opacity .15s;
+  }
+  #analyze-btn:hover { opacity: .88; }
+  #analyze-btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* PROGRESS */
+  .progress-wrap { display: none; margin-top: 16px; }
+  .progress-bar { height: 3px; background: var(--bd); border-radius: 2px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--gold); border-radius: 2px; width: 0%; animation: ppulse 1.4s ease-in-out infinite; }
+  @keyframes ppulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .progress-label { font-family: var(--mono); font-size: .7rem; color: var(--mut); margin-top: 6px; text-align: center; }
+
+  /* REPORT PAGE */
+  #page-report { display: none; width: 100%; }
+  .report-nav {
+    padding: 14px 28px; border-bottom: 1px solid var(--bd);
+    display: flex; align-items: center; gap: 12px; position: sticky; top: 0;
+    background: rgba(10,10,10,.92); backdrop-filter: blur(8px); z-index: 10;
+  }
+  .report-nav-title { flex: 1; font-weight: 700; color: var(--wht); font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .btn-sm {
+    padding: 7px 14px; font-family: 'Bricolage Grotesque', sans-serif; font-size: .8rem;
+    font-weight: 600; border-radius: 8px; border: 1px solid var(--bd);
+    cursor: pointer; background: var(--card); color: var(--txt); white-space: nowrap;
+    text-decoration: none; display: inline-block; transition: border-color .15s;
+  }
+  .btn-sm:hover { border-color: var(--gold); color: var(--wht); }
+  .btn-sm.gold { background: var(--gold); color: #000; border-color: var(--gold); }
+  #report-body { padding: 0; }
+
+  /* Privacy note */
+  .privacy { font-family: var(--mono); font-size: .68rem; color: var(--mut); text-align: center; margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- UPLOAD PAGE -->
+<div id="page-upload">
+  <nav style="position:absolute;top:0;left:0;right:0;border-bottom:1px solid var(--bd);padding:18px 28px;display:flex;align-items:center;justify-content:space-between">
+    <div class="nav-logo">Signal Analyse</div>
+    <div class="nav-hint">Privat · Kein Speichern</div>
+  </nav>
+
+  <div class="hero" style="margin-top:60px">
+    <div class="hero-eyebrow">Signal Chat Auswertung</div>
+    <h1>Dein Chat.<br>Deine Stats.</h1>
+    <p>JSONL-Datei hochladen, Chat wählen, fertig.<br>Alles läuft direkt hier — nichts wird gespeichert.</p>
+  </div>
+
+  <div class="upload-card">
+    <div class="drop-zone" id="drop-zone">
+      <div class="drop-icon">📂</div>
+      <div class="drop-label">JSONL-Datei hierher ziehen</div>
+      <div class="drop-sub">oder klicken zum Auswählen · max 150 MB</div>
+      <input type="file" id="file-input" accept=".jsonl,.json">
+    </div>
+
+    <div class="status info" id="status">Signal-Export wählen um zu starten</div>
+
+    <div id="chat-section">
+      <div class="chat-section-label">Chat auswählen</div>
+      <div id="chat-items"></div>
+    </div>
+
+    <button id="analyze-btn" onclick="startAnalysis()">Analyse starten →</button>
+
+    <div class="progress-wrap" id="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-label" id="progress-label">Analysiere…</div>
+    </div>
+
+    <div class="privacy">Deine Datei verlässt deinen Browser nicht dauerhaft.<br>Sie wird nach der Analyse automatisch gelöscht.</div>
+  </div>
+</div>
+
+<!-- REPORT PAGE -->
+<div id="page-report">
+  <div class="report-nav">
+    <div class="report-nav-title" id="report-nav-title">Analyse</div>
+    <button class="btn-sm" onclick="backToUpload()">← Neu</button>
+    <button class="btn-sm gold" id="dl-btn" onclick="downloadReport()">Herunterladen</button>
+  </div>
+  <div id="report-body"></div>
+</div>
+
+<script>
+let _sid = null, _chatId = null, _chatName = null, _reportHtml = null;
+
+// ── File handling ─────────────────────────────────────────────
+const dropZone  = document.getElementById("drop-zone");
+const fileInput = document.getElementById("file-input");
+
+dropZone.addEventListener("click", () => fileInput.click());
+fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+dropZone.addEventListener("dragover",  e => { e.preventDefault(); dropZone.classList.add("over"); });
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("over"));
+dropZone.addEventListener("drop", e => {
+  e.preventDefault(); dropZone.classList.remove("over");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+
+function setStatus(msg, cls="info") {
+  const el = document.getElementById("status");
+  el.textContent = msg; el.className = "status " + cls;
+}
+
+async function handleFile(file) {
+  setStatus(`Lade "${file.name}" hoch…`);
+  document.getElementById("chat-section").style.display  = "none";
+  document.getElementById("analyze-btn").style.display   = "none";
+  document.getElementById("progress-wrap").style.display = "none";
+  _sid = null; _chatId = null;
+
+  const form = new FormData();
+  form.append("file", file);
+
+  try {
+    const res  = await fetch("/upload", { method: "POST", body: form });
+    const data = await res.json();
+    if (data.error) { setStatus(data.error, "error"); return; }
+    _sid = data.session_id;
+    renderChatList(data.chats);
+    setStatus(`${data.chats.length} Chat(s) gefunden — einen auswählen`, "ok");
+  } catch(e) {
+    setStatus("Upload fehlgeschlagen: " + e.message, "error");
+  }
+}
+
+// ── Chat list ─────────────────────────────────────────────────
+function renderChatList(chats) {
+  const container = document.getElementById("chat-items");
+  container.innerHTML = "";
+
+  const contacts = chats.filter(c => c.type === "contact");
+  const groups   = chats.filter(c => c.type === "group");
+
+  function addHeader(label) {
+    const h = document.createElement("div");
+    h.className = "chat-type-header";
+    h.textContent = label;
+    container.appendChild(h);
+  }
+
+  function addItem(chat) {
+    const div = document.createElement("div");
+    div.className = "chat-item";
+    div.dataset.id   = chat.chat_id;
+    div.dataset.name = chat.name;
+    div.innerHTML = `<span class="badge ${chat.type}">${chat.type === "contact" ? "Kontakt" : "Gruppe"}</span><span class="chat-name">${escHtml(chat.name)}</span>`;
+    div.addEventListener("click", () => selectChat(chat.chat_id, chat.name, div));
+    container.appendChild(div);
+  }
+
+  if (contacts.length) { addHeader("Direktchats"); contacts.forEach(addItem); }
+  if (groups.length)   { addHeader("Gruppen");      groups.forEach(addItem); }
+
+  document.getElementById("chat-section").style.display = "block";
+}
+
+function selectChat(id, name, el) {
+  document.querySelectorAll(".chat-item").forEach(i => i.classList.remove("selected"));
+  el.classList.add("selected");
+  _chatId = id; _chatName = name;
+  document.getElementById("analyze-btn").style.display = "block";
+}
+
+// ── Analysis ──────────────────────────────────────────────────
+async function startAnalysis() {
+  if (!_sid || !_chatId) return;
+  const btn = document.getElementById("analyze-btn");
+  btn.disabled = true;
+  document.getElementById("progress-wrap").style.display = "block";
+  setStatus("Analysiere — kann einen Moment dauern…", "info");
+
+  // Fake progress animation
+  let prog = 0;
+  const fill  = document.getElementById("progress-fill");
+  const label = document.getElementById("progress-label");
+  const timer = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 12, 88);
+    fill.style.width = prog + "%";
+    if      (prog < 30) label.textContent = "Lese Nachrichten…";
+    else if (prog < 60) label.textContent = "Berechne Statistiken…";
+    else                label.textContent = "Baue Report…";
+  }, 350);
+
+  try {
+    const res  = await fetch("/analyze", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ session_id: _sid, chat_id: _chatId })
+    });
+    const data = await res.json();
+    clearInterval(timer);
+
+    if (data.error) {
+      fill.style.width = "0%";
+      document.getElementById("progress-wrap").style.display = "none";
+      setStatus(data.error, "error");
+      btn.disabled = false;
+      return;
+    }
+
+    fill.style.width = "100%";
+    setTimeout(() => showReport(data.html), 300);
+
+  } catch(e) {
+    clearInterval(timer);
+    setStatus("Fehler: " + e.message, "error");
+    btn.disabled = false;
+    document.getElementById("progress-wrap").style.display = "none";
+  }
+}
+
+function showReport(html) {
+  _reportHtml = html;
+
+  // Inject report HTML into report-body (strip outer html/body tags)
+  const parser   = new DOMParser();
+  const doc      = parser.parseFromString(html, "text/html");
+  const wrap     = doc.querySelector(".wrap");
+
+  const reportBody = document.getElementById("report-body");
+  reportBody.innerHTML = "";
+
+  if (wrap) {
+    // Clone the .wrap content directly so styles from the report's <style> also work
+    const style = doc.querySelector("style");
+    if (style) {
+      const s = document.createElement("style");
+      s.textContent = style.textContent;
+      document.head.appendChild(s);
+    }
+    reportBody.appendChild(document.importNode(wrap, true));
+  } else {
+    // Fallback: iframe
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "width:100%;border:none;min-height:100vh;";
+    iframe.srcdoc = html;
+    reportBody.appendChild(iframe);
+    iframe.onload = () => {
+      iframe.style.height = iframe.contentDocument.body.scrollHeight + "px";
+    };
+  }
+
+  document.getElementById("report-nav-title").textContent = _chatName || "Analyse";
+  document.getElementById("page-upload").style.display  = "none";
+  document.getElementById("page-report").style.display  = "block";
+  window.scrollTo(0, 0);
+}
+
+function downloadReport() {
+  if (!_reportHtml) return;
+  const blob = new Blob([_reportHtml], { type: "text/html;charset=utf-8" });
+  const a    = document.createElement("a");
+  a.href     = URL.createObjectURL(blob);
+  a.download = `signal-analyse-${(_chatName||"report").replace(/\s+/g,"-").toLowerCase()}.html`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function backToUpload() {
+  document.getElementById("page-report").style.display = "block";
+  document.getElementById("page-upload").style.display = "flex";
+  document.getElementById("page-report").style.display = "none";
+  document.getElementById("analyze-btn").disabled      = false;
+  document.getElementById("progress-wrap").style.display = "none";
+  document.getElementById("progress-fill").style.width   = "0%";
+  setStatus("Signal-Export wählen um zu starten", "info");
+  window.scrollTo(0, 0);
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+</script>
+</body>
+</html>
