@@ -12,246 +12,328 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg:   #0a0a0a; --card: #111111; --bd: #1e1e1e;
-    --mut:  #555;    --txt:  #ccc;    --wht: #fff;
-    --gold: #c9a84c; --blue: #6b9fff; --grn: #6bcc88; --red: #ff6b6b;
+    --bg:   #0a0a0a;
+    --card: #111111;
+    --bd:   #1e1e1e;
+    --mut:  #555555;
+    --txt:  #cccccc;
+    --wht:  #ffffff;
+    --gold: #c9a84c;
+    --blue: #6b9fff;
+    --grn:  #6bcc88;
+    --red:  #ff6b6b;
     --mono: 'JetBrains Mono','Fira Mono',monospace;
-    --safe-b: env(safe-area-inset-bottom,0px);
-    --safe-t: env(safe-area-inset-top,0px);
-  }
-  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-  html{height:100%;-webkit-text-size-adjust:100%}
-  body{
-    font-family:'Bricolage Grotesque',sans-serif;
-    background:var(--bg);color:var(--txt);
-    min-height:100dvh;display:flex;flex-direction:column;
-    -webkit-tap-highlight-color:transparent;
+    --safe-t: env(safe-area-inset-top, 0px);
+    --safe-b: env(safe-area-inset-bottom, 0px);
   }
 
-  /* ── TOP NAV ── */
-  .top-nav{
-    position:fixed;top:0;left:0;right:0;z-index:200;
-    padding:14px 20px;
-    padding-top:calc(14px + var(--safe-t));
-    background:rgba(10,10,10,.92);backdrop-filter:blur(12px);
-    -webkit-backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--bd);
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { height: 100%; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    background: var(--bg); color: var(--txt);
+    min-height: 100dvh; display: flex; flex-direction: column;
+    -webkit-tap-highlight-color: transparent;
   }
-  .nav-logo{font-family:var(--mono);font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);flex-shrink:0}
-  .nav-right{display:flex;align-items:center;gap:8px}
-  .nav-code-display{
-    font-family:var(--mono);font-size:.72rem;color:var(--mut);
-    background:var(--card);border:1px solid var(--bd);
-    border-radius:6px;padding:4px 9px;cursor:pointer;
-    transition:border-color .15s;display:none;
-  }
-  .nav-code-display:hover{border-color:var(--gold)}
-  .btn-ghost{
-    font-family:var(--mono);font-size:.68rem;color:var(--mut);
-    background:none;border:1px solid var(--bd);border-radius:6px;
-    padding:4px 9px;cursor:pointer;transition:border-color .15s,color .15s;
-  }
-  .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
 
-  /* ── UPLOAD PAGE ── */
-  #page-upload{
-    flex:1;display:flex;flex-direction:column;align-items:center;
-    padding-top:calc(68px + var(--safe-t));
-    padding-bottom:calc(32px + var(--safe-b));
-    padding-left:16px;padding-right:16px;
+  /* ─── TOP NAV ─────────────────────────────────────────────── */
+  .top-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    padding: 0 20px;
+    padding-top: var(--safe-t);
+    height: calc(52px + var(--safe-t));
+    background: rgba(10,10,10,.92);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--bd);
+    display: flex; align-items: flex-end; padding-bottom: 12px;
+    justify-content: space-between;
   }
-  .hero{text-align:center;max-width:480px;width:100%;padding:28px 0 24px}
-  .hero-eyebrow{font-family:var(--mono);font-size:.65rem;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:14px}
-  .hero h1{font-size:clamp(2rem,8vw,2.8rem);font-weight:800;color:var(--wht);letter-spacing:-.03em;line-height:1.1;margin-bottom:10px}
-  .hero p{color:var(--mut);font-size:.88rem;line-height:1.7}
-  .upload-card{width:100%;max-width:480px;background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:20px}
+  .nav-logo {
+    font-family: var(--mono); font-size: .7rem;
+    letter-spacing: .14em; text-transform: uppercase; color: var(--gold);
+  }
+  .nav-hint {
+    font-family: var(--mono); font-size: .66rem; color: var(--mut);
+  }
 
-  /* Drop zone */
-  .drop-zone{
-    border:2px dashed var(--bd);border-radius:12px;
-    padding:30px 16px;text-align:center;cursor:pointer;
-    transition:border-color .2s,background .2s;
+  /* ─── UPLOAD PAGE ─────────────────────────────────────────── */
+  #page-upload {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding-top: calc(72px + var(--safe-t));
+    padding-bottom: calc(40px + var(--safe-b));
+    padding-left: 16px; padding-right: 16px;
   }
-  .drop-zone:active,.drop-zone.over{border-color:var(--gold);background:rgba(201,168,76,.04)}
-  @media(hover:hover){.drop-zone:hover{border-color:var(--gold);background:rgba(201,168,76,.04)}}
-  .drop-icon{font-size:2rem;margin-bottom:8px}
-  .drop-label{color:var(--txt);font-size:.9rem;margin-bottom:4px}
-  .drop-sub{color:var(--mut);font-family:var(--mono);font-size:.68rem}
-  #file-input{display:none}
-  .mobile-pick-btn{
-    display:none;width:100%;margin-top:10px;padding:11px;
-    background:transparent;border:1px solid var(--bd);border-radius:9px;
-    color:var(--mut);font-family:var(--mono);font-size:.75rem;cursor:pointer;
-  }
-  @media(max-width:600px){.mobile-pick-btn{display:block}.drop-sub-d{display:none}}
 
-  /* Status */
-  .status{margin-top:12px;font-family:var(--mono);font-size:.75rem;min-height:18px;text-align:center;line-height:1.5}
-  .status.error{color:var(--red)}.status.ok{color:var(--grn)}.status.info{color:var(--mut)}
+  .hero {
+    text-align: center; max-width: 460px; width: 100%;
+    padding: 32px 0 26px;
+  }
+  .hero-eyebrow {
+    font-family: var(--mono); font-size: .65rem;
+    letter-spacing: .16em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 14px;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 8vw, 2.8rem); font-weight: 800;
+    color: var(--wht); letter-spacing: -.03em; line-height: 1.1;
+    margin-bottom: 10px;
+  }
+  .hero p { color: var(--mut); font-size: .9rem; line-height: 1.7; }
 
-  /* Chat list */
-  #chat-section{display:none;margin-top:20px}
-  .chat-section-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);font-weight:600;margin-bottom:8px}
-  .chat-type-header{font-size:.62rem;text-transform:uppercase;letter-spacing:.1em;color:var(--mut);opacity:.6;padding:10px 2px 4px}
-  .chat-items-scroll{max-height:260px;overflow-y:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--bd) transparent}
-  .chat-item{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:background .12s,border-color .12s;margin-bottom:3px;min-height:44px}
-  .chat-item:active{background:rgba(201,168,76,.08);border-color:var(--gold)}
-  @media(hover:hover){.chat-item:hover{background:rgba(255,255,255,.03);border-color:var(--bd)}}
-  .chat-item.selected{background:rgba(201,168,76,.08);border-color:var(--gold)}
-  .badge{font-size:.6rem;font-family:var(--mono);text-transform:uppercase;padding:2px 7px;border-radius:999px;flex-shrink:0}
-  .badge.contact{background:rgba(107,159,255,.14);color:var(--blue)}
-  .badge.group{background:rgba(107,204,136,.14);color:var(--grn)}
-  .chat-name{font-size:.88rem;color:var(--txt);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  /* ─── CARD ────────────────────────────────────────────────── */
+  .upload-card {
+    width: 100%; max-width: 460px;
+    background: var(--card); border: 1px solid var(--bd);
+    border-radius: 18px; padding: 20px;
+  }
 
-  /* Analyze btn */
-  #analyze-btn{
-    display:none;width:100%;margin-top:16px;padding:15px;
-    background:var(--gold);color:#000;font-family:'Bricolage Grotesque',sans-serif;
-    font-size:.95rem;font-weight:700;border:none;border-radius:12px;cursor:pointer;
-    transition:opacity .15s,transform .1s;-webkit-appearance:none;min-height:50px;
+  /* ─── DROP ZONE ───────────────────────────────────────────── */
+  .drop-zone {
+    border: 2px dashed var(--bd); border-radius: 12px;
+    padding: 32px 16px; text-align: center; cursor: pointer;
+    transition: border-color .2s, background .2s;
   }
-  #analyze-btn:active{opacity:.85;transform:scale(.99)}
-  #analyze-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+  .drop-zone.over,
+  .drop-zone:active { border-color: var(--gold); background: rgba(201,168,76,.05); }
+  @media (hover: hover) {
+    .drop-zone:hover { border-color: var(--gold); background: rgba(201,168,76,.04); }
+  }
+  .drop-icon  { font-size: 2rem; margin-bottom: 8px; }
+  .drop-label { color: var(--txt); font-size: .9rem; margin-bottom: 4px; }
+  .drop-sub   { color: var(--mut); font-family: var(--mono); font-size: .68rem; }
+  #file-input { display: none; }
 
-  /* Progress */
-  .progress-wrap{display:none;margin-top:14px}
-  .progress-bar{height:3px;background:var(--bd);border-radius:2px;overflow:hidden}
-  .progress-fill{height:100%;background:var(--gold);border-radius:2px;width:0%;animation:ppulse 1.4s ease-in-out infinite}
-  @keyframes ppulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .progress-label{font-family:var(--mono);font-size:.68rem;color:var(--mut);margin-top:6px;text-align:center}
-  .privacy{font-family:var(--mono);font-size:.64rem;color:var(--mut);text-align:center;margin-top:14px;line-height:1.6}
+  /* Mobile-only file pick button */
+  .pick-btn {
+    display: none; width: 100%; margin-top: 10px; padding: 11px;
+    background: transparent; border: 1px solid var(--bd); border-radius: 9px;
+    color: var(--mut); font-family: var(--mono); font-size: .75rem; cursor: pointer;
+    transition: border-color .15s;
+  }
+  .pick-btn:active { border-color: var(--gold); }
+  @media (max-width: 600px) {
+    .pick-btn { display: block; }
+    .drop-sub { display: none; }
+  }
 
-  /* ── REPORT PAGE ── */
-  #page-report{display:none;width:100%;min-height:100dvh}
-  .report-nav{
-    position:sticky;top:0;z-index:100;
-    background:rgba(10,10,10,.95);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--bd);
-    padding:0 16px;padding-top:var(--safe-t);
+  /* ─── STATUS ──────────────────────────────────────────────── */
+  .status {
+    margin-top: 12px; font-family: var(--mono); font-size: .75rem;
+    min-height: 18px; text-align: center; line-height: 1.5;
+    transition: color .2s;
   }
-  .report-nav-inner{display:flex;align-items:center;gap:8px;height:52px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .report-nav-inner::-webkit-scrollbar{display:none}
-  .report-nav-title{font-weight:700;color:var(--wht);font-size:.9rem;white-space:nowrap;flex-shrink:0;margin-right:4px}
-  .btn-sm{
-    padding:7px 12px;font-family:'Bricolage Grotesque',sans-serif;font-size:.78rem;font-weight:600;
-    border-radius:8px;border:1px solid var(--bd);cursor:pointer;background:var(--card);color:var(--txt);
-    white-space:nowrap;flex-shrink:0;transition:border-color .15s;min-height:34px;-webkit-appearance:none;
-  }
-  .btn-sm:active{border-color:var(--gold)}
-  @media(hover:hover){.btn-sm:hover{border-color:var(--gold);color:var(--wht)}}
-  .btn-sm.gold{background:var(--gold);color:#000;border-color:var(--gold)}
-  #report-body{padding-bottom:calc(24px + var(--safe-b))}
+  .status.error { color: var(--red); }
+  .status.ok    { color: var(--grn); }
+  .status.info  { color: var(--mut); }
 
-  /* ── HISTORY / CODE MODAL ── */
-  .modal-overlay{
-    display:none;position:fixed;inset:0;z-index:300;
-    background:rgba(0,0,0,.7);backdrop-filter:blur(4px);
-    -webkit-backdrop-filter:blur(4px);
-    align-items:flex-end;justify-content:center;
+  /* ─── CHAT LIST ───────────────────────────────────────────── */
+  #chat-section { display: none; margin-top: 20px; }
+  .chat-section-label {
+    font-size: .65rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--mut); font-weight: 600; margin-bottom: 8px;
   }
-  .modal-overlay.open{display:flex}
-  .modal{
-    width:100%;max-width:500px;background:var(--card);
-    border:1px solid var(--bd);border-radius:20px 20px 0 0;
-    padding:24px 20px calc(24px + var(--safe-b));
-    animation:slideUp .25s ease;
+  .chat-type-header {
+    font-size: .62rem; text-transform: uppercase; letter-spacing: .1em;
+    color: var(--mut); opacity: .55; padding: 10px 2px 4px;
   }
-  @media(min-width:520px){
-    .modal-overlay{align-items:center}
-    .modal{border-radius:18px;margin:16px}
+  .chat-items-scroll {
+    max-height: 260px; overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin; scrollbar-color: var(--bd) transparent;
   }
-  @keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-  .modal-title{font-weight:800;color:var(--wht);font-size:1.2rem;margin-bottom:6px}
-  .modal-sub{font-family:var(--mono);font-size:.72rem;color:var(--mut);margin-bottom:20px;line-height:1.5}
-  .code-display{
-    font-family:var(--mono);font-size:1.6rem;font-weight:700;
-    color:var(--gold);letter-spacing:.1em;text-align:center;
-    background:#0d0d0d;border:1px solid var(--bd);border-radius:12px;
-    padding:18px;margin-bottom:16px;
+  .chat-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px; cursor: pointer;
+    border: 1px solid transparent;
+    transition: background .12s, border-color .12s;
+    margin-bottom: 3px; min-height: 44px;
   }
-  .code-input-row{display:flex;gap:8px;margin-bottom:12px}
-  .code-input{
-    flex:1;background:#0d0d0d;border:1px solid var(--bd);border-radius:10px;
-    padding:12px 14px;font-family:var(--mono);font-size:1rem;font-weight:600;
-    color:var(--wht);text-transform:uppercase;letter-spacing:.08em;
-    outline:none;transition:border-color .15s;
+  .chat-item:active  { background: rgba(201,168,76,.08); border-color: var(--gold); }
+  .chat-item.selected { background: rgba(201,168,76,.08); border-color: var(--gold); }
+  @media (hover: hover) {
+    .chat-item:hover { background: rgba(255,255,255,.03); border-color: var(--bd); }
   }
-  .code-input:focus{border-color:var(--gold)}
-  .btn-full{
-    width:100%;padding:13px;background:var(--gold);color:#000;
-    font-family:'Bricolage Grotesque',sans-serif;font-size:.92rem;font-weight:700;
-    border:none;border-radius:10px;cursor:pointer;-webkit-appearance:none;
-    transition:opacity .15s;min-height:46px;
+  .badge {
+    font-size: .6rem; font-family: var(--mono); text-transform: uppercase;
+    padding: 2px 7px; border-radius: 999px; flex-shrink: 0;
   }
-  .btn-full:active{opacity:.85}
-  .btn-full.secondary{background:transparent;color:var(--mut);border:1px solid var(--bd)}
-  .divider{height:1px;background:var(--bd);margin:16px 0}
+  .badge.contact { background: rgba(107,159,255,.14); color: var(--blue); }
+  .badge.group   { background: rgba(107,204,136,.14); color: var(--grn); }
+  .chat-name {
+    font-size: .88rem; color: var(--txt); flex: 1;
+    min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
 
-  /* History list */
-  .history-item{
-    display:flex;align-items:center;gap:10px;padding:11px 12px;
-    border-radius:10px;cursor:pointer;border:1px solid transparent;
-    transition:background .12s,border-color .12s;margin-bottom:4px;
-    min-height:44px;
+  /* ─── ANALYZE BUTTON ──────────────────────────────────────── */
+  #analyze-btn {
+    display: none; width: 100%; margin-top: 16px; padding: 15px;
+    background: var(--gold); color: #000;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: .95rem; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer;
+    transition: opacity .15s, transform .1s;
+    -webkit-appearance: none; min-height: 50px;
   }
-  .history-item:active{background:rgba(201,168,76,.08);border-color:var(--gold)}
-  @media(hover:hover){.history-item:hover{background:rgba(255,255,255,.03);border-color:var(--bd)}}
-  .history-item.compare-sel{background:rgba(107,159,255,.08);border-color:var(--blue)}
-  .history-name{flex:1;font-size:.9rem;color:var(--txt);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .history-date{font-family:var(--mono);font-size:.68rem;color:var(--mut);flex-shrink:0}
-  .compare-bar{
-    display:none;margin-top:12px;padding:12px;
-    background:#0d0d0d;border:1px solid var(--bd);border-radius:10px;
-    font-family:var(--mono);font-size:.78rem;color:var(--mut);
-    display:flex;align-items:center;gap:10px;
-  }
-  .compare-bar.hidden{display:none!important}
+  #analyze-btn:active  { opacity: .85; transform: scale(.99); }
+  #analyze-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
-  /* Toast */
-  #share-toast{
-    display:none;position:fixed;
-    bottom:calc(24px + var(--safe-b));left:50%;transform:translateX(-50%);
-    background:#111;border:1px solid #2e2e2e;color:#ccc;
-    padding:12px 18px;border-radius:10px;font-family:var(--mono);font-size:.75rem;
-    z-index:9999;max-width:calc(100vw - 32px);word-break:break-all;
-    text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.6);
+  /* ─── PROGRESS ────────────────────────────────────────────── */
+  .progress-wrap { display: none; margin-top: 14px; }
+  .progress-bar  { height: 3px; background: var(--bd); border-radius: 2px; overflow: hidden; }
+  .progress-fill {
+    height: 100%; background: var(--gold); border-radius: 2px;
+    width: 0%; animation: ppulse 1.4s ease-in-out infinite;
+  }
+  @keyframes ppulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .progress-label {
+    font-family: var(--mono); font-size: .68rem; color: var(--mut);
+    margin-top: 6px; text-align: center;
+  }
+  .privacy {
+    font-family: var(--mono); font-size: .64rem; color: var(--mut);
+    text-align: center; margin-top: 14px; line-height: 1.6;
+  }
+
+  /* ─── REPORT PAGE ─────────────────────────────────────────── */
+  #page-report { display: none; width: 100%; min-height: 100dvh; }
+
+  .report-nav {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,10,.95);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--bd);
+    padding: 0 16px; padding-top: var(--safe-t);
+  }
+  .report-nav-inner {
+    display: flex; align-items: center; gap: 8px;
+    height: 52px;
+    overflow-x: auto; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .report-nav-inner::-webkit-scrollbar { display: none; }
+  .report-nav-title {
+    font-weight: 700; color: var(--wht); font-size: .9rem;
+    white-space: nowrap; flex-shrink: 0; margin-right: 4px;
+  }
+  .btn-sm {
+    padding: 7px 13px;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: .78rem; font-weight: 600;
+    border-radius: 8px; border: 1px solid var(--bd);
+    cursor: pointer; background: var(--card); color: var(--txt);
+    white-space: nowrap; flex-shrink: 0;
+    transition: border-color .15s, background .15s;
+    min-height: 34px; -webkit-appearance: none;
+  }
+  .btn-sm:active { border-color: var(--gold); color: var(--wht); }
+  @media (hover: hover) {
+    .btn-sm:hover { border-color: var(--gold); color: var(--wht); }
+  }
+  .btn-sm.gold { background: var(--gold); color: #000; border-color: var(--gold); }
+  .btn-sm:disabled { opacity: .5; cursor: not-allowed; }
+
+  #report-body { padding-bottom: calc(32px + var(--safe-b)); }
+
+  /* ─── COMPARE MODAL ───────────────────────────────────────── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(0,0,0,.75);
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    align-items: flex-end; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    width: 100%; max-width: 460px;
+    background: var(--card); border: 1px solid var(--bd);
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px calc(24px + var(--safe-b));
+    animation: slideUp .22s ease;
+  }
+  @media (min-width: 480px) {
+    .modal-overlay { align-items: center; }
+    .modal { border-radius: 18px; margin: 16px; }
+  }
+  @keyframes slideUp { from{transform:translateY(32px);opacity:0} to{transform:translateY(0);opacity:1} }
+  .modal-title {
+    font-weight: 800; color: var(--wht); font-size: 1.1rem; margin-bottom: 6px;
+  }
+  .modal-sub {
+    font-family: var(--mono); font-size: .72rem; color: var(--mut);
+    margin-bottom: 18px; line-height: 1.5;
+  }
+  .compare-input {
+    width: 100%; background: #0d0d0d; border: 1px solid var(--bd);
+    border-radius: 10px; padding: 12px 14px;
+    font-family: var(--mono); font-size: .85rem; color: var(--wht);
+    outline: none; transition: border-color .15s; margin-bottom: 10px;
+  }
+  .compare-input:focus { border-color: var(--gold); }
+  .compare-input::placeholder { color: var(--mut); }
+  .btn-row { display: flex; gap: 8px; }
+  .btn-full {
+    flex: 1; padding: 13px;
+    background: var(--gold); color: #000;
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: .9rem; font-weight: 700;
+    border: none; border-radius: 10px; cursor: pointer;
+    -webkit-appearance: none; min-height: 46px;
+    transition: opacity .15s;
+  }
+  .btn-full:active { opacity: .85; }
+  .btn-full.sec {
+    background: transparent; color: var(--mut);
+    border: 1px solid var(--bd); flex: 0 0 auto; padding: 13px 16px;
+  }
+
+  /* ─── TOAST ───────────────────────────────────────────────── */
+  #toast {
+    display: none; position: fixed;
+    bottom: calc(24px + var(--safe-b)); left: 50%;
+    transform: translateX(-50%);
+    background: #111; border: 1px solid #2e2e2e; color: var(--txt);
+    padding: 12px 18px; border-radius: 10px;
+    font-family: var(--mono); font-size: .75rem;
+    z-index: 9999; max-width: calc(100vw - 32px);
+    text-align: center; word-break: break-all;
+    box-shadow: 0 4px 24px rgba(0,0,0,.6);
+    transition: opacity .2s;
   }
 </style>
 </head>
 <body>
 
-<!-- ── TOP NAV ── -->
+<!-- ─── NAV ──────────────────────────────────────────────────── -->
 <nav class="top-nav">
   <div class="nav-logo">Signal Analyse</div>
-  <div class="nav-right">
-    <div class="nav-code-display" id="nav-code" onclick="openModal('history-modal')" title="Mein Code / Verlauf"></div>
-    <button class="btn-ghost" onclick="openModal('code-modal')">🔑 Mein Code</button>
-  </div>
+  <div class="nav-hint">Privat · Lokal</div>
 </nav>
 
-<!-- ── UPLOAD PAGE ── -->
+<!-- ─── UPLOAD PAGE ──────────────────────────────────────────── -->
 <div id="page-upload">
   <div class="hero">
     <div class="hero-eyebrow">Signal Chat Auswertung</div>
     <h1>Dein Chat.<br>Deine Stats.</h1>
-    <p>JSONL hochladen, Chat wählen, fertig.</p>
+    <p>JSONL hochladen, Chat wählen, fertig.<br>Nichts wird gespeichert.</p>
   </div>
 
   <div class="upload-card">
     <div class="drop-zone" id="drop-zone">
       <div class="drop-icon">📂</div>
-      <div class="drop-label">Datei auswählen oder hierher ziehen</div>
-      <div class="drop-sub drop-sub-d">max. 150 MB · .jsonl</div>
+      <div class="drop-label">Datei hierher ziehen oder antippen</div>
+      <div class="drop-sub">max. 150 MB · .jsonl</div>
       <input type="file" id="file-input" accept=".jsonl,.json">
     </div>
-    <button class="mobile-pick-btn" onclick="document.getElementById('file-input').click()">📁 Datei vom Gerät wählen</button>
+    <button class="pick-btn" onclick="document.getElementById('file-input').click()">
+      📁 Datei vom Gerät wählen
+    </button>
 
     <div class="status info" id="status">Signal-Export wählen um zu starten</div>
 
     <div id="chat-section">
       <div class="chat-section-label">Chat auswählen</div>
-      <div class="chat-items-scroll"><div id="chat-items"></div></div>
+      <div class="chat-items-scroll">
+        <div id="chat-items"></div>
+      </div>
     </div>
 
     <button id="analyze-btn" onclick="startAnalysis()">Analyse starten →</button>
@@ -265,377 +347,293 @@
   </div>
 </div>
 
-<!-- ── REPORT PAGE ── -->
+<!-- ─── REPORT PAGE ──────────────────────────────────────────── -->
 <div id="page-report">
   <div class="report-nav">
     <div class="report-nav-inner">
-      <div class="report-nav-title" id="report-nav-title">Analyse</div>
+      <div class="report-nav-title" id="report-title">Analyse</div>
       <button class="btn-sm" onclick="backToUpload()">← Neu</button>
       <button class="btn-sm" id="share-btn" onclick="shareReport()">🔗 Teilen</button>
+      <button class="btn-sm" id="compare-btn" onclick="openCompareModal()" style="display:none">⚖️ Vergleichen</button>
       <button class="btn-sm" onclick="printReport()">📄 PDF</button>
       <button class="btn-sm gold" onclick="downloadReport()">⬇</button>
     </div>
   </div>
-  <div id="share-toast"></div>
   <div id="report-body"></div>
 </div>
 
-<!-- ── CODE MODAL ── -->
-<div class="modal-overlay" id="code-modal" onclick="closeModalBg(event,'code-modal')">
+<!-- ─── COMPARE MODAL ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="compare-modal" onclick="closeModalBg(event,'compare-modal')">
   <div class="modal">
-    <div class="modal-title">🔑 Persönlicher Code</div>
-    <div class="modal-sub" id="code-modal-sub">Speichere deine Analysen und greife von überall darauf zu. Kein Login nötig — nur dein Code.</div>
-
-    <div id="code-section-new">
-      <button class="btn-full" onclick="createCode()" style="margin-bottom:10px">Neuen Code erstellen</button>
-      <div class="divider"></div>
-      <div style="font-family:var(--mono);font-size:.72rem;color:var(--mut);margin-bottom:8px">Bereits einen Code?</div>
-      <div class="code-input-row">
-        <input class="code-input" id="code-enter" placeholder="XXXX-XXXX" maxlength="9" oninput="formatCodeInput(this)">
-        <button class="btn-sm gold" onclick="enterCode()" style="min-height:46px;padding:0 16px">Los</button>
-      </div>
-    </div>
-
-    <div id="code-section-show" style="display:none">
-      <div class="code-display" id="code-value"></div>
-      <button class="btn-full" onclick="copyCode()" style="margin-bottom:8px">Code kopieren</button>
-      <button class="btn-full secondary" onclick="closeModal('code-modal')">Schließen</button>
+    <div class="modal-title">⚖️ Chats vergleichen</div>
+    <div class="modal-sub">Füge den geteilten Link eines zweiten Chats ein. Beide werden nebeneinander angezeigt.</div>
+    <input class="compare-input" id="compare-input"
+           placeholder="z.B. https://deine-app.railway.app/r/abc123..."
+           type="url" autocomplete="off" autocorrect="off" spellcheck="false">
+    <div class="btn-row">
+      <button class="btn-full sec" onclick="closeModal('compare-modal')">Abbrechen</button>
+      <button class="btn-full" onclick="doCompare()">Vergleichen →</button>
     </div>
   </div>
 </div>
 
-<!-- ── HISTORY MODAL ── -->
-<div class="modal-overlay" id="history-modal" onclick="closeModalBg(event,'history-modal')">
-  <div class="modal">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
-      <div class="modal-title">📋 Meine Analysen</div>
-      <button class="btn-ghost" onclick="closeModal('history-modal')">✕</button>
-    </div>
-    <div class="modal-sub" id="history-code-label"></div>
-
-    <div id="history-list" style="max-height:320px;overflow-y:auto;-webkit-overflow-scrolling:touch"></div>
-
-    <div class="compare-bar hidden" id="compare-bar">
-      <span id="compare-label" style="flex:1">Wähle einen zweiten Report</span>
-      <button class="btn-sm gold" id="compare-go-btn" onclick="openCompare()" style="display:none">Vergleichen →</button>
-      <button class="btn-sm" onclick="cancelCompare()">✕</button>
-    </div>
-
-    <div class="divider"></div>
-    <button class="btn-full secondary" onclick="switchCode()">Anderen Code verwenden</button>
-  </div>
-</div>
+<div id="toast"></div>
 
 <script>
-let _sid=null,_chatId=null,_chatName=null,_reportHtml=null,_userCode=null;
-let _lastShareId=null;
-let _compareSelA=null,_compareSelB=null;
+'use strict';
+let _sid = null, _chatId = null, _chatName = null, _reportHtml = null, _lastShareId = null;
 
-// ── Init: load saved code ─────────────────────────────────────
-window.addEventListener('DOMContentLoaded',()=>{
-  const saved=localStorage.getItem('signal_code');
-  if(saved){setCode(saved,false);}
+// ── File handling ──────────────────────────────────────────────
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+
+dropZone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
 
-// ── File handling ─────────────────────────────────────────────
-const dropZone=document.getElementById('drop-zone');
-const fileInput=document.getElementById('file-input');
-dropZone.addEventListener('click',()=>fileInput.click());
-fileInput.addEventListener('change',()=>{if(fileInput.files[0])handleFile(fileInput.files[0]);});
-dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('over');});
-dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('over'));
-dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
-
-function setStatus(msg,cls='info'){
-  const el=document.getElementById('status');
-  el.textContent=msg;el.className='status '+cls;
+function setStatus(msg, cls = 'info') {
+  const el = document.getElementById('status');
+  el.textContent = msg; el.className = 'status ' + cls;
 }
 
-async function handleFile(file){
+async function handleFile(file) {
   setStatus(`Lade "${file.name}" hoch…`);
-  document.getElementById('chat-section').style.display='none';
-  document.getElementById('analyze-btn').style.display='none';
-  document.getElementById('progress-wrap').style.display='none';
-  _sid=null;_chatId=null;
-  const form=new FormData();form.append('file',file);
-  try{
-    const res=await fetch('/upload',{method:'POST',body:form});
-    const data=await res.json();
-    if(data.error){setStatus(data.error,'error');return;}
-    _sid=data.session_id;
+  document.getElementById('chat-section').style.display  = 'none';
+  document.getElementById('analyze-btn').style.display   = 'none';
+  document.getElementById('progress-wrap').style.display = 'none';
+  _sid = null; _chatId = null;
+
+  const form = new FormData();
+  form.append('file', file);
+  try {
+    const res  = await fetch('/upload', { method: 'POST', body: form });
+    const data = await res.json();
+    if (data.error) { setStatus(data.error, 'error'); return; }
+    _sid = data.session_id;
     renderChatList(data.chats);
-    setStatus(`${data.chats.length} Chat(s) gefunden`,'ok');
-  }catch(e){setStatus('Upload fehlgeschlagen: '+e.message,'error');}
+    setStatus(`${data.chats.length} Chat${data.chats.length !== 1 ? 's' : ''} gefunden`, 'ok');
+  } catch (e) {
+    setStatus('Upload fehlgeschlagen: ' + e.message, 'error');
+  }
 }
 
-// ── Chat list ─────────────────────────────────────────────────
-function renderChatList(chats){
-  const container=document.getElementById('chat-items');
-  container.innerHTML='';
-  const contacts=chats.filter(c=>c.type==='contact');
-  const groups=chats.filter(c=>c.type==='group');
-  function addHeader(label){
-    const h=document.createElement('div');h.className='chat-type-header';h.textContent=label;container.appendChild(h);
+// ── Chat list ──────────────────────────────────────────────────
+function renderChatList(chats) {
+  const container = document.getElementById('chat-items');
+  container.innerHTML = '';
+  const contacts = chats.filter(c => c.type === 'contact');
+  const groups   = chats.filter(c => c.type === 'group');
+
+  function addHeader(label) {
+    const h = document.createElement('div');
+    h.className = 'chat-type-header'; h.textContent = label;
+    container.appendChild(h);
   }
-  function addItem(chat){
-    const div=document.createElement('div');div.className='chat-item';
-    div.dataset.id=chat.chat_id;div.dataset.name=chat.name;
-    div.innerHTML=`<span class="badge ${chat.type}">${chat.type==='contact'?'Kontakt':'Gruppe'}</span><span class="chat-name">${escHtml(chat.name)}</span>`;
-    div.addEventListener('click',()=>selectChat(chat.chat_id,chat.name,div));
+  function addItem(chat) {
+    const div = document.createElement('div');
+    div.className = 'chat-item';
+    div.dataset.id   = chat.chat_id;
+    div.dataset.name = chat.name;
+    div.innerHTML = `<span class="badge ${chat.type}">${chat.type === 'contact' ? 'Kontakt' : 'Gruppe'}</span><span class="chat-name">${esc(chat.name)}</span>`;
+    div.addEventListener('click', () => selectChat(chat.chat_id, chat.name, div));
     container.appendChild(div);
   }
-  if(contacts.length){addHeader('Direktchats');contacts.forEach(addItem);}
-  if(groups.length){addHeader('Gruppen');groups.forEach(addItem);}
-  document.getElementById('chat-section').style.display='block';
+  if (contacts.length) { addHeader('Direktchats'); contacts.forEach(addItem); }
+  if (groups.length)   { addHeader('Gruppen');     groups.forEach(addItem); }
+  document.getElementById('chat-section').style.display = 'block';
 }
 
-function selectChat(id,name,el){
-  document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('selected'));
+function selectChat(id, name, el) {
+  document.querySelectorAll('.chat-item').forEach(i => i.classList.remove('selected'));
   el.classList.add('selected');
-  _chatId=id;_chatName=name;
-  document.getElementById('analyze-btn').style.display='block';
-  setTimeout(()=>document.getElementById('analyze-btn').scrollIntoView({behavior:'smooth',block:'nearest'}),100);
+  _chatId = id; _chatName = name;
+  document.getElementById('analyze-btn').style.display = 'block';
+  setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 80);
 }
 
-// ── Analysis ──────────────────────────────────────────────────
-async function startAnalysis(){
-  if(!_sid||!_chatId)return;
-  const btn=document.getElementById('analyze-btn');
-  btn.disabled=true;
-  document.getElementById('progress-wrap').style.display='block';
-  setStatus('Analysiere…','info');
-  let prog=0;
-  const fill=document.getElementById('progress-fill');
-  const label=document.getElementById('progress-label');
-  const timer=setInterval(()=>{
-    prog=Math.min(prog+Math.random()*12,88);
-    fill.style.width=prog+'%';
-    if(prog<30)label.textContent='Lese Nachrichten…';
-    else if(prog<60)label.textContent='Berechne Statistiken…';
-    else label.textContent='Baue Report…';
-  },350);
-  try{
-    const res=await fetch('/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:_sid,chat_id:_chatId})});
-    const data=await res.json();
+// ── Analysis ───────────────────────────────────────────────────
+async function startAnalysis() {
+  if (!_sid || !_chatId) return;
+  const btn  = document.getElementById('analyze-btn');
+  const fill = document.getElementById('progress-fill');
+  const lbl  = document.getElementById('progress-label');
+  btn.disabled = true;
+  document.getElementById('progress-wrap').style.display = 'block';
+  setStatus('Analysiere…', 'info');
+
+  let prog = 0;
+  const timer = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 11, 88);
+    fill.style.width = prog + '%';
+    lbl.textContent = prog < 30 ? 'Lese Nachrichten…'
+                    : prog < 65 ? 'Berechne Statistiken…'
+                    : 'Baue Report…';
+  }, 380);
+
+  try {
+    const res  = await fetch('/analyze', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: _sid, chat_id: _chatId })
+    });
+    const data = await res.json();
     clearInterval(timer);
-    if(data.error){fill.style.width='0%';document.getElementById('progress-wrap').style.display='none';setStatus(data.error,'error');btn.disabled=false;return;}
-    fill.style.width='100%';
-    setTimeout(()=>showReport(data.html),300);
-  }catch(e){
-    clearInterval(timer);setStatus('Fehler: '+e.message,'error');btn.disabled=false;
-    document.getElementById('progress-wrap').style.display='none';
-  }
-}
-
-function showReport(html){
-  _reportHtml=html;
-  const parser=new DOMParser();
-  const doc=parser.parseFromString(html,'text/html');
-  const wrap=doc.querySelector('.wrap');
-  const reportBody=document.getElementById('report-body');
-  reportBody.innerHTML='';
-  if(wrap){
-    const style=doc.querySelector('style');
-    if(style){const s=document.createElement('style');s.textContent=style.textContent;document.head.appendChild(s);}
-    reportBody.appendChild(document.importNode(wrap,true));
-  }else{
-    const iframe=document.createElement('iframe');
-    iframe.style.cssText='width:100%;border:none;min-height:100vh;';
-    iframe.srcdoc=html;reportBody.appendChild(iframe);
-    iframe.onload=()=>{iframe.style.height=iframe.contentDocument.body.scrollHeight+'px';};
-  }
-  document.getElementById('report-nav-title').textContent=_chatName||'Analyse';
-  document.getElementById('page-upload').style.display='none';
-  document.getElementById('page-report').style.display='block';
-  window.scrollTo(0,0);
-}
-
-function downloadReport(){
-  if(!_reportHtml)return;
-  const blob=new Blob([_reportHtml],{type:'text/html;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`signal-${(_chatName||'report').replace(/\s+/g,'-').toLowerCase()}.html`;
-  a.click();URL.revokeObjectURL(a.href);
-}
-
-function backToUpload(){
-  document.getElementById('page-report').style.display='none';
-  document.getElementById('page-upload').style.display='flex';
-  document.getElementById('analyze-btn').disabled=false;
-  document.getElementById('progress-wrap').style.display='none';
-  document.getElementById('progress-fill').style.width='0%';
-  setStatus('Signal-Export wählen um zu starten','info');
-  window.scrollTo(0,0);
-}
-
-function printReport(){
-  if(!_reportHtml)return;
-  const w=window.open('','_blank');
-  w.document.write(_reportHtml);w.document.close();w.focus();
-  setTimeout(()=>{w.print();},600);
-}
-
-async function shareReport(){
-  if(!_sid||!_chatId)return;
-  const btn=document.getElementById('share-btn');
-  btn.textContent='…';btn.disabled=true;
-  try{
-    const res=await fetch('/share',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({session_id:_sid,chat_id:_chatId,user_code:_userCode,chat_name:_chatName||''})});
-    const data=await res.json();
-    if(data.error){showToast('Fehler: '+data.error,'var(--red)');return;}
-    _lastShareId=data.share_id;
-    const url=window.location.origin+'/r/'+data.share_id;
-    if(navigator.share){
-      try{await navigator.share({title:'Signal Analyse – '+(_chatName||''),url});showToast('✓ Geteilt!','var(--grn)');return;}
-      catch(e){}
+    if (data.error) {
+      fill.style.width = '0%';
+      document.getElementById('progress-wrap').style.display = 'none';
+      setStatus(data.error, 'error'); btn.disabled = false; return;
     }
-    try{await navigator.clipboard.writeText(url);showToast('🔗 Link kopiert!','var(--grn)');}
-    catch{showToast('Link: '+url,'var(--gold)');}
-  }catch(e){showToast('Fehler: '+e.message,'var(--red)');}
-  finally{btn.textContent='🔗 Teilen';btn.disabled=false;}
-}
-
-function showToast(msg,color){
-  const t=document.getElementById('share-toast');
-  t.textContent=msg;t.style.color=color||'var(--txt)';t.style.display='block';
-  clearTimeout(t._timer);t._timer=setTimeout(()=>{t.style.display='none';},4000);
-}
-
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-
-// ── Code / History ────────────────────────────────────────────
-function openModal(id){document.getElementById(id).classList.add('open');}
-function closeModal(id){document.getElementById(id).classList.remove('open');}
-function closeModalBg(e,id){if(e.target===document.getElementById(id))closeModal(id);}
-
-function setCode(code,save=true){
-  _userCode=code;
-  if(save)localStorage.setItem('signal_code',code);
-  const el=document.getElementById('nav-code');
-  el.textContent=code;el.style.display='block';
-}
-
-async function createCode(){
-  const res=await fetch('/code/new',{method:'POST'});
-  const data=await res.json();
-  if(data.error){alert(data.error);return;}
-  setCode(data.code);
-  document.getElementById('code-section-new').style.display='none';
-  document.getElementById('code-section-show').style.display='block';
-  document.getElementById('code-value').textContent=data.code;
-  document.getElementById('code-modal-sub').textContent='Dein persönlicher Code. Speichere ihn sicher!';
-}
-
-async function enterCode(){
-  const code=document.getElementById('code-enter').value.trim().toUpperCase();
-  if(code.length<8){showToast('Code zu kurz','var(--red)');return;}
-  const res=await fetch('/code/validate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code})});
-  const data=await res.json();
-  if(!data.valid){showToast('Code nicht gefunden','var(--red)');return;}
-  setCode(code);
-  closeModal('code-modal');
-  showToast('✓ Code aktiviert!','var(--grn)');
-}
-
-function copyCode(){
-  navigator.clipboard.writeText(_userCode||'').then(()=>showToast('Code kopiert!','var(--grn)'));
-}
-
-function formatCodeInput(el){
-  let v=el.value.replace(/[^A-Z0-9]/gi,'').toUpperCase();
-  if(v.length>4)v=v.slice(0,4)+'-'+v.slice(4);
-  el.value=v;
-}
-
-function switchCode(){
-  _userCode=null;localStorage.removeItem('signal_code');
-  document.getElementById('nav-code').style.display='none';
-  closeModal('history-modal');
-  document.getElementById('code-section-new').style.display='block';
-  document.getElementById('code-section-show').style.display='none';
-  openModal('code-modal');
-}
-
-// ── History ───────────────────────────────────────────────────
-document.getElementById('nav-code').addEventListener('click', loadHistory);
-
-async function loadHistory(){
-  if(!_userCode)return;
-  document.getElementById('history-code-label').textContent='Code: '+_userCode;
-  document.getElementById('history-list').innerHTML='<div style="font-family:var(--mono);font-size:.75rem;color:var(--mut);padding:8px 0">Lade…</div>';
-  openModal('history-modal');
-  _compareSelA=null;_compareSelB=null;
-  document.getElementById('compare-bar').classList.add('hidden');
-
-  const res=await fetch('/history',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:_userCode})});
-  const data=await res.json();
-  const list=document.getElementById('history-list');
-  list.innerHTML='';
-  if(!data.reports||data.reports.length===0){
-    list.innerHTML='<div style="font-family:var(--mono);font-size:.75rem;color:var(--mut);padding:8px 0">Noch keine gespeicherten Analysen. Analysiere einen Chat und teile den Link!</div>';
-    return;
-  }
-  data.reports.forEach(r=>{
-    const d=new Date(r.created_at);
-    const dateStr=d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'2-digit'});
-    const div=document.createElement('div');
-    div.className='history-item';
-    div.dataset.shareId=r.share_id;
-    div.dataset.name=r.chat_name||'?';
-    div.innerHTML=`<span class="badge ${r.chat_type==='group'?'group':'contact'}">${r.chat_type==='group'?'Gruppe':'Kontakt'}</span><span class="history-name">${escHtml(r.chat_name||'Unbekannt')}</span><span class="history-date">${dateStr}</span>`;
-    div.addEventListener('click',()=>historyItemClick(div,r.share_id,r.chat_name||'?'));
-    list.appendChild(div);
-  });
-}
-
-function historyItemClick(el,shareId,name){
-  if(!_compareSelA){
-    // Open report
-    window.open('/r/'+shareId,'_blank');
+    fill.style.width = '100%';
+    setTimeout(() => showReport(data.html), 280);
+  } catch (e) {
+    clearInterval(timer);
+    setStatus('Fehler: ' + e.message, 'error'); btn.disabled = false;
+    document.getElementById('progress-wrap').style.display = 'none';
   }
 }
 
-function startCompare(){
-  _compareSelA=null;_compareSelB=null;
-  const bar=document.getElementById('compare-bar');
-  bar.classList.remove('hidden');
-  document.getElementById('compare-label').textContent='Wähle ersten Report';
-  document.getElementById('compare-go-btn').style.display='none';
-  // Rebind history items for compare selection
-  document.querySelectorAll('.history-item').forEach(el=>{
-    el.onclick=()=>selectForCompare(el,el.dataset.shareId,el.dataset.name);
-  });
+function showReport(html) {
+  _reportHtml = html; _lastShareId = null;
+
+  // Inject report styles + content into page (no iframe = better mobile scroll)
+  const parser = new DOMParser();
+  const doc    = parser.parseFromString(html, 'text/html');
+  const wrap   = doc.querySelector('.wrap');
+  const body   = document.getElementById('report-body');
+  body.innerHTML = '';
+  if (wrap) {
+    const style = doc.querySelector('style');
+    if (style) {
+      const s = document.createElement('style');
+      s.textContent = style.textContent; document.head.appendChild(s);
+    }
+    body.appendChild(document.importNode(wrap, true));
+  } else {
+    // Fallback iframe
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'width:100%;border:none;min-height:100vh;display:block';
+    iframe.srcdoc = html; body.appendChild(iframe);
+  }
+
+  document.getElementById('report-title').textContent = _chatName || 'Analyse';
+  document.getElementById('compare-btn').style.display = 'none'; // shown after share
+  document.getElementById('page-upload').style.display = 'none';
+  document.getElementById('page-report').style.display = 'block';
+  window.scrollTo(0, 0);
 }
 
-function selectForCompare(el,shareId,name){
-  if(!_compareSelA){
-    _compareSelA={id:shareId,name};
-    el.classList.add('compare-sel');
-    document.getElementById('compare-label').textContent=`"${name}" gewählt — wähle zweiten Report`;
-  }else if(!_compareSelB && shareId!==_compareSelA.id){
-    _compareSelB={id:shareId,name};
-    el.classList.add('compare-sel');
-    document.getElementById('compare-label').textContent=`"${_compareSelA.name}" vs "${name}"`;
-    document.getElementById('compare-go-btn').style.display='block';
+function backToUpload() {
+  document.getElementById('page-report').style.display = 'none';
+  document.getElementById('page-upload').style.display = 'flex';
+  document.getElementById('analyze-btn').disabled       = false;
+  document.getElementById('progress-wrap').style.display = 'none';
+  document.getElementById('progress-fill').style.width   = '0%';
+  setStatus('Signal-Export wählen um zu starten', 'info');
+  window.scrollTo(0, 0);
+}
+
+function downloadReport() {
+  if (!_reportHtml) return;
+  const blob = new Blob([_reportHtml], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `signal-${(_chatName || 'report').replace(/\s+/g, '-').toLowerCase()}.html`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+
+function printReport() {
+  if (!_reportHtml) return;
+  const w = window.open('', '_blank');
+  w.document.write(_reportHtml); w.document.close(); w.focus();
+  setTimeout(() => w.print(), 600);
+}
+
+// ── Share ──────────────────────────────────────────────────────
+async function shareReport() {
+  if (!_sid || !_chatId) return;
+  const btn = document.getElementById('share-btn');
+  btn.textContent = '…'; btn.disabled = true;
+
+  try {
+    const res  = await fetch('/share', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: _sid, chat_id: _chatId, chat_name: _chatName || '' })
+    });
+    const data = await res.json();
+    if (data.error) { showToast('Fehler: ' + data.error, 'var(--red)'); return; }
+
+    _lastShareId = data.share_id;
+    const url = window.location.origin + '/r/' + data.share_id;
+
+    // Show compare button now that we have a share id
+    document.getElementById('compare-btn').style.display = 'block';
+
+    // Native share on mobile, clipboard on desktop
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Signal Analyse – ' + (_chatName || ''), url });
+        showToast('✓ Geteilt!', 'var(--grn)'); return;
+      } catch (e) { /* user cancelled, fall through */ }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      showToast('🔗 Link kopiert!', 'var(--grn)');
+    } catch {
+      showToast('Link: ' + url, 'var(--gold)');
+    }
+  } catch (e) {
+    showToast('Fehler: ' + e.message, 'var(--red)');
+  } finally {
+    btn.textContent = '🔗 Teilen'; btn.disabled = false;
   }
 }
 
-function cancelCompare(){
-  _compareSelA=null;_compareSelB=null;
-  document.getElementById('compare-bar').classList.add('hidden');
-  document.querySelectorAll('.history-item').forEach(el=>{
-    el.classList.remove('compare-sel');
-    el.onclick=()=>historyItemClick(el,el.dataset.shareId,el.dataset.name);
-  });
+// ── Compare ────────────────────────────────────────────────────
+function openCompareModal() {
+  document.getElementById('compare-input').value = '';
+  openModal('compare-modal');
+  setTimeout(() => document.getElementById('compare-input').focus(), 200);
 }
 
-function openCompare(){
-  if(!_compareSelA||!_compareSelB)return;
-  window.open(`/compare/${_compareSelA.id}/${_compareSelB.id}`,'_blank');
-  closeModal('history-modal');
-  cancelCompare();
+function doCompare() {
+  const raw  = document.getElementById('compare-input').value.trim();
+  // Extract share_id from URL or treat as raw id
+  let other_id = raw;
+  const match = raw.match(/\/r\/([a-zA-Z0-9]{8,16})/);
+  if (match) other_id = match[1];
+  other_id = other_id.replace(/[^a-zA-Z0-9]/g, '');
+
+  if (!other_id || other_id.length < 8) {
+    showToast('Bitte einen gültigen Link einfügen.', 'var(--red)'); return;
+  }
+  if (!_lastShareId) {
+    showToast('Zuerst diesen Chat teilen, dann vergleichen.', 'var(--gold)'); return;
+  }
+  closeModal('compare-modal');
+  window.open(`/compare/${_lastShareId}/${other_id}`, '_blank');
+}
+
+// ── Modal helpers ──────────────────────────────────────────────
+function openModal(id)          { document.getElementById(id).classList.add('open'); }
+function closeModal(id)         { document.getElementById(id).classList.remove('open'); }
+function closeModalBg(e, id)    { if (e.target === document.getElementById(id)) closeModal(id); }
+
+// ── Toast ──────────────────────────────────────────────────────
+function showToast(msg, color) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.style.color = color || 'var(--txt)';
+  t.style.display = 'block';
+  clearTimeout(t._t);
+  t._t = setTimeout(() => { t.style.display = 'none'; }, 4000);
+}
+
+// ── Utility ────────────────────────────────────────────────────
+function esc(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 </script>
 </body>

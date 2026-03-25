@@ -1,39 +1,57 @@
-import os, uuid, random, string
+"""
+Signal Analyse – Flask Backend
+Routes:
+  GET  /              → Upload UI
+  POST /upload        → Parse JSONL, return chat list
+  POST /analyze       → Run analysis, return HTML
+  POST /share         → Save report to Supabase, return share_id
+  GET  /r/<share_id>  → View shared report
+  GET  /compare/<a>/<b> → Side-by-side report comparison
+"""
+import os, uuid
 import requests as req_lib
 from flask import Flask, request, jsonify, render_template
 from analyzer_core import get_chat_list, run_analysis
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(24))
-app.config["MAX_CONTENT_LENGTH"] = 150 * 1024 * 1024
+app.config["MAX_CONTENT_LENGTH"] = 150 * 1024 * 1024  # 150 MB
 
 # ── Supabase ──────────────────────────────────────────────────
 SUPA_URL = os.environ.get("SUPABASE_URL",
     "https://zjhufokqykymkbsqwfxl.supabase.co")
 SUPA_KEY = os.environ.get("SUPABASE_KEY",
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpqaHVmb2txeWt5bWtic3F3ZnhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg4MzQ1NzQsImV4cCI6MjA4NDQxMDU3NH0.cdAQlSkE1krLBiSdBhrqm-tyE96CRBXQE5qeVgLYdmA")
-HDR = {
+
+_HDR = {
     "apikey":        SUPA_KEY,
     "Authorization": f"Bearer {SUPA_KEY}",
     "Content-Type":  "application/json",
     "Prefer":        "return=representation",
 }
 
-def _db(method, table, **kwargs):
-    url = f"{SUPA_URL}/rest/v1/{table}"
-    r = req_lib.request(method, url, headers=HDR, timeout=10, **kwargs)
+def _db_save(share_id: str, html: str, chat_name: str = ""):
+    r = req_lib.post(
+        f"{SUPA_URL}/rest/v1/signal_reports",
+        headers=_HDR,
+        json={"share_id": share_id, "html": html, "chat_name": chat_name},
+        timeout=15,
+    )
     r.raise_for_status()
-    return r.json() if r.content else None
 
-def _gen_code():
-    """8-char human-readable code like A3K-9PX2"""
-    chars = string.ascii_uppercase + string.digits
-    raw = "".join(random.choices(chars, k=8))
-    return raw[:4] + "-" + raw[4:]
+def _db_load(share_id: str):
+    r = req_lib.get(
+        f"{SUPA_URL}/rest/v1/signal_reports",
+        headers={**_HDR, "Accept": "application/json"},
+        params={"share_id": f"eq.{share_id}", "select": "html,chat_name"},
+        timeout=10,
+    )
+    rows = r.json()
+    return rows[0] if rows else None
 
-# ── In-memory session + html cache ───────────────────────────
-_store      = {}
-_html_cache = {}
+# ── In-memory session + HTML cache ────────────────────────────
+_store      = {}   # sid → file_bytes
+_html_cache = {}   # "sid:chat_id" → html
 MAX_SESSIONS = 50
 
 # ── Routes ────────────────────────────────────────────────────
@@ -45,7 +63,7 @@ def index():
 @app.route("/upload", methods=["POST"])
 def upload():
     if "file" not in request.files:
-        return jsonify({"error": "Keine Datei."}), 400
+        return jsonify({"error": "Keine Datei übermittelt."}), 400
     f = request.files["file"]
     if not f.filename:
         return jsonify({"error": "Keine Datei ausgewählt."}), 400
@@ -58,10 +76,11 @@ def upload():
     except Exception as e:
         return jsonify({"error": f"Datei konnte nicht gelesen werden: {e}"}), 400
     if not chats:
-        return jsonify({"error": "Keine Chats gefunden."}), 400
+        return jsonify({"error": "Keine Chats gefunden — ist das die richtige Datei?"}), 400
 
     sid = str(uuid.uuid4())
     _store[sid] = file_bytes
+    # Evict oldest sessions
     while len(_store) > MAX_SESSIONS:
         del _store[next(iter(_store))]
 
@@ -76,8 +95,9 @@ def analyze():
     cache_key = f"{sid}:{chat_id}"
 
     if sid not in _store:
-        return jsonify({"error": "Session abgelaufen — Datei erneut hochladen."}), 400
+        return jsonify({"error": "Session abgelaufen — bitte Datei erneut hochladen."}), 400
 
+    # Return cached result if available (also used by /share)
     if cache_key in _html_cache:
         return jsonify({"html": _html_cache[cache_key]})
 
@@ -98,14 +118,14 @@ def share():
     data      = request.get_json(force=True)
     sid       = data.get("session_id", "")
     chat_id   = data.get("chat_id", "")
-    user_code = data.get("user_code") or None
     chat_name = data.get("chat_name", "")
     cache_key = f"{sid}:{chat_id}"
 
+    # Use cached HTML — avoids re-analysis and doesn't need session alive
     html = _html_cache.get(cache_key)
     if not html:
         if sid not in _store:
-            return jsonify({"error": "Analysiere den Chat zuerst, dann teilen."}), 400
+            return jsonify({"error": "Bitte zuerst analysieren, dann teilen."}), 400
         try:
             html = run_analysis(_store[sid], chat_id)
             _html_cache[cache_key] = html
@@ -113,16 +133,10 @@ def share():
             return jsonify({"error": str(e)}), 500
 
     share_id = str(uuid.uuid4()).replace("-", "")[:12]
-
     try:
-        _db("POST", "signal_reports", json={
-            "share_id":  share_id,
-            "html":      html,
-            "user_code": user_code,
-            "chat_name": chat_name,
-        })
+        _db_save(share_id, html, chat_name)
     except Exception as e:
-        return jsonify({"error": f"Speichern fehlgeschlagen: {e}"}), 500
+        return jsonify({"error": f"Link konnte nicht erstellt werden: {e}"}), 500
 
     return jsonify({"share_id": share_id})
 
@@ -131,144 +145,104 @@ def share():
 def view_report(share_id):
     share_id = "".join(c for c in share_id if c.isalnum())
     try:
-        rows = _db("GET", "signal_reports",
-                   params={"share_id": f"eq.{share_id}", "select": "html"})
-        html = rows[0]["html"] if rows else None
+        row = _db_load(share_id)
+        html = row["html"] if row else None
     except Exception:
         html = None
 
     if not html:
-        return (
-            "<html><body style='font-family:sans-serif;background:#0a0a0a;color:#555;"
-            "display:flex;align-items:center;justify-content:center;height:100vh;margin:0'>"
-            "<div style='text-align:center'>"
-            "<div style='font-size:2.5rem;margin-bottom:16px'>📭</div>"
-            "<div style='font-size:1.1rem;color:#888'>Dieser Link existiert nicht oder ist abgelaufen.</div>"
-            "</div></body></html>"
-        ), 404
+        return _not_found_page(), 404
     return html
 
 
-# ── User code / history ───────────────────────────────────────
-@app.route("/code/new", methods=["POST"])
-def new_code():
-    """Generate a new personal code and store it."""
-    code = _gen_code()
-    try:
-        _db("POST", "user_codes", json={"code": code})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    return jsonify({"code": code})
-
-
-@app.route("/code/validate", methods=["POST"])
-def validate_code():
-    """Check if a code exists."""
-    code = (request.get_json(force=True) or {}).get("code", "").strip().upper()
-    try:
-        rows = _db("GET", "user_codes",
-                   params={"code": f"eq.{code}", "select": "code"})
-        return jsonify({"valid": bool(rows)})
-    except Exception:
-        return jsonify({"valid": False})
-
-
-@app.route("/history", methods=["POST"])
-def history():
-    """Get all reports for a user code."""
-    code = (request.get_json(force=True) or {}).get("code", "").strip().upper()
-    if not code:
-        return jsonify({"error": "Kein Code."}), 400
-    try:
-        rows = _db("GET", "signal_reports",
-                   params={
-                       "user_code": f"eq.{code}",
-                       "select":    "share_id,chat_name,chat_type,created_at",
-                       "order":     "created_at.desc",
-                       "limit":     "20",
-                   })
-        return jsonify({"reports": rows or []})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-# ── Compare ──────────────────────────────────────────────────
 @app.route("/compare/<id_a>/<id_b>")
 def compare(id_a, id_b):
-    """Show two reports side by side."""
     id_a = "".join(c for c in id_a if c.isalnum())
     id_b = "".join(c for c in id_b if c.isalnum())
     try:
-        ra = _db("GET", "signal_reports",
-                 params={"share_id": f"eq.{id_a}", "select": "html,chat_name"})
-        rb = _db("GET", "signal_reports",
-                 params={"share_id": f"eq.{id_b}", "select": "html,chat_name"})
+        row_a = _db_load(id_a)
+        row_b = _db_load(id_b)
     except Exception:
-        ra = rb = []
+        row_a = row_b = None
 
-    if not ra or not rb:
-        return "<h2 style='font-family:sans-serif;color:#888;text-align:center;margin-top:20%'>Ein oder beide Reports nicht gefunden.</h2>", 404
+    if not row_a or not row_b:
+        return "<html><body style='font-family:sans-serif;background:#0a0a0a;color:#888;display:flex;align-items:center;justify-content:center;height:100vh'><div style='text-align:center'><div style='font-size:2rem;margin-bottom:12px'>🔍</div><div>Ein oder beide Reports nicht gefunden.</div></div></body></html>", 404
 
-    name_a = ra[0].get("chat_name") or "Report A"
-    name_b = rb[0].get("chat_name") or "Report B"
+    name_a = row_a.get("chat_name") or "Report A"
+    name_b = row_b.get("chat_name") or "Report B"
+    html_a = row_a["html"].replace('"', "&quot;").replace("</", "&lt;/")
+    html_b = row_b["html"].replace('"', "&quot;").replace("</", "&lt;/")
 
-    # Inline both reports into a split-screen view
-    compare_html = f"""<!doctype html>
+    return f"""<!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Vergleich: {name_a} vs {name_b}</title>
+<title>{name_a} vs {name_b}</title>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
 <style>
   *,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
-  body{{font-family:'Bricolage Grotesque',sans-serif;background:#0a0a0a;color:#ccc}}
-  .top{{position:sticky;top:0;z-index:100;background:rgba(10,10,10,.95);
+  body{{font-family:'Bricolage Grotesque',sans-serif;background:#0a0a0a;color:#ccc;min-height:100vh}}
+  .bar{{position:sticky;top:0;z-index:100;background:rgba(10,10,10,.95);
         backdrop-filter:blur(10px);border-bottom:1px solid #1e1e1e;
-        padding:14px 20px;display:flex;align-items:center;gap:16px}}
-  .top-title{{font-weight:800;color:#fff;font-size:1rem;flex:1}}
-  .vs{{font-family:'JetBrains Mono',monospace;font-size:.7rem;color:#555;padding:0 4px}}
-  .back{{padding:7px 14px;border:1px solid #1e1e1e;border-radius:8px;
-         background:#111;color:#ccc;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;
-         font-size:.78rem;font-weight:600;text-decoration:none}}
-  .split{{display:grid;grid-template-columns:1fr 1fr;min-height:calc(100vh - 52px)}}
-  .pane{{border-right:1px solid #1e1e1e;overflow:hidden}}
+        padding:0 20px;display:flex;align-items:center;gap:12px;height:52px}}
+  .bar-title{{font-weight:800;color:#fff;font-size:.95rem;flex:1;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+  .vs{{font-family:'JetBrains Mono',monospace;font-size:.68rem;
+       color:#555;flex-shrink:0}}
+  .back{{padding:6px 14px;border:1px solid #1e1e1e;border-radius:8px;
+         background:#111;color:#ccc;cursor:pointer;
+         font-family:'Bricolage Grotesque',sans-serif;
+         font-size:.78rem;font-weight:600;
+         text-decoration:none;flex-shrink:0;white-space:nowrap}}
+  .split{{display:grid;grid-template-columns:1fr 1fr;
+          min-height:calc(100dvh - 52px)}}
+  .pane{{border-right:1px solid #1e1e1e;min-width:0}}
   .pane:last-child{{border-right:none}}
-  .pane-label{{
-    position:sticky;top:52px;z-index:50;
-    background:rgba(10,10,10,.9);backdrop-filter:blur(8px);
-    padding:10px 20px;border-bottom:1px solid #1e1e1e;
-    font-family:'JetBrains Mono',monospace;font-size:.7rem;
-    text-transform:uppercase;letter-spacing:.1em;color:#c9a84c;
-  }}
+  .pane-label{{position:sticky;top:52px;z-index:50;
+    background:rgba(10,10,10,.92);backdrop-filter:blur(8px);
+    padding:9px 20px;border-bottom:1px solid #1e1e1e;
+    font-family:'JetBrains Mono',monospace;font-size:.68rem;
+    text-transform:uppercase;letter-spacing:.1em;color:#c9a84c}}
   iframe{{width:100%;border:none;min-height:100vh;display:block}}
-  @media(max-width:700px){{
+  @media(max-width:680px){{
     .split{{grid-template-columns:1fr}}
     .pane{{border-right:none;border-bottom:1px solid #1e1e1e}}
+    .bar-title span.b-name{{display:none}}
   }}
 </style>
 </head>
 <body>
-<div class="top">
-  <div class="top-title">
-    <span style="color:#ccc">{name_a}</span>
-    <span class="vs">vs</span>
-    <span style="color:#ccc">{name_b}</span>
+<div class="bar">
+  <div class="bar-title">
+    <span>{name_a}</span>
+    <span class="vs">&nbsp;vs&nbsp;</span>
+    <span class="b-name">{name_b}</span>
   </div>
   <a href="javascript:history.back()" class="back">← Zurück</a>
 </div>
 <div class="split">
   <div class="pane">
     <div class="pane-label">{name_a}</div>
-    <iframe srcdoc="{ra[0]['html'].replace(chr(34), '&quot;').replace(chr(60)+'/', '&lt;/')}" loading="lazy"></iframe>
+    <iframe srcdoc="{html_a}" loading="lazy" title="{name_a}"></iframe>
   </div>
   <div class="pane">
     <div class="pane-label">{name_b}</div>
-    <iframe srcdoc="{rb[0]['html'].replace(chr(34), '&quot;').replace(chr(60)+'/', '&lt;/')}" loading="lazy"></iframe>
+    <iframe srcdoc="{html_b}" loading="lazy" title="{name_b}"></iframe>
   </div>
 </div>
 </body></html>"""
-    return compare_html
+
+
+def _not_found_page():
+    return (
+        "<html><body style='font-family:sans-serif;background:#0a0a0a;"
+        "display:flex;align-items:center;justify-content:center;height:100vh;margin:0'>"
+        "<div style='text-align:center'>"
+        "<div style='font-size:2.5rem;margin-bottom:14px'>📭</div>"
+        "<div style='font-size:1rem;color:#666'>Dieser Link existiert nicht oder ist abgelaufen.</div>"
+        "</div></body></html>"
+    )
 
 
 @app.errorhandler(413)
