@@ -249,7 +249,7 @@
       <div class="report-nav-title" id="report-title">Analyse</div>
       <button class="btn-sm" onclick="backToUpload()">← Neu</button>
       <button class="btn-sm" id="share-btn" onclick="shareReport()">🔗 Teilen</button>
-      <button class="btn-sm" id="compare-btn" onclick="openCompareModal()" style="display:none">⚖️ Vergleichen</button>
+      <button class="btn-sm" id="compare-btn" onclick="openCompareModal()">⚖️ Vergleichen</button>
       <button class="btn-sm" onclick="printReport()">📄 PDF</button>
       <button class="btn-sm gold" onclick="downloadReport()">⬇ HTML</button>
     </div>
@@ -261,9 +261,12 @@
 <div class="modal-overlay" id="compare-modal" onclick="closeModalBg(event,'compare-modal')">
   <div class="modal">
     <div class="modal-title">⚖️ Chats vergleichen</div>
-    <div class="modal-sub">Füge den geteilten Link eines zweiten Chats ein. Beide werden nebeneinander angezeigt.</div>
-    <input class="compare-input" id="compare-input"
-           placeholder="z.B. https://…/r/abc123"
+    <div class="modal-sub">Teile beide Chats und füge die Links hier ein.</div>
+    <input class="compare-input" id="compare-input-a"
+           placeholder="Link Chat 1 (z.B. /r/abc123…)"
+           type="url" autocomplete="off" autocorrect="off" spellcheck="false">
+    <input class="compare-input" id="compare-input-b"
+           placeholder="Link Chat 2 (z.B. /r/xyz456…)"
            type="url" autocomplete="off" autocorrect="off" spellcheck="false">
     <div class="btn-row">
       <button class="btn-full sec" onclick="closeModal('compare-modal')">Abbrechen</button>
@@ -415,7 +418,6 @@ async function shareReport(){
     if(data.error){showToast('Fehler: '+data.error,'var(--red)');return;}
     _lastShareId=data.share_id;
     const url=window.location.origin+'/r/'+data.share_id;
-    document.getElementById('compare-btn').style.display='block';
     if(navigator.share){
       try{await navigator.share({title:'Signal Analyse – '+(_chatName||''),url});showToast('✓ Geteilt!','var(--grn)');return;}catch(e){}
     }
@@ -427,20 +429,25 @@ async function shareReport(){
 
 // ── Compare ────────────────────────────────────────────────────
 function openCompareModal(){
-  document.getElementById('compare-input').value='';
+  document.getElementById('compare-input-a').value='';
+  document.getElementById('compare-input-b').value='';
   openModal('compare-modal');
-  setTimeout(()=>document.getElementById('compare-input').focus(),200);
+  setTimeout(()=>document.getElementById('compare-input-a').focus(),200);
 }
 function doCompare(){
-  const raw=document.getElementById('compare-input').value.trim();
-  let other=raw;
-  const m=raw.match(/\/r\/([a-zA-Z0-9]{8,16})/);
-  if(m)other=m[1];
-  other=other.replace(/[^a-zA-Z0-9]/g,'');
-  if(!other||other.length<8){showToast('Bitte einen gültigen Link einfügen.','var(--red)');return;}
-  if(!_lastShareId){showToast('Zuerst diesen Chat teilen, dann vergleichen.','var(--gold)');return;}
+  function extractId(raw){
+    const m=raw.match(/\/r\/([a-zA-Z0-9]{8,16})/);
+    return m ? m[1] : raw.replace(/[^a-zA-Z0-9]/g,'');
+  }
+  const rawA=document.getElementById('compare-input-a').value.trim();
+  const rawB=document.getElementById('compare-input-b').value.trim();
+  const idA=extractId(rawA);
+  const idB=extractId(rawB);
+  if(!idA||idA.length<8){showToast('Link 1 ungültig oder fehlt.','var(--red)');return;}
+  if(!idB||idB.length<8){showToast('Link 2 ungültig oder fehlt.','var(--red)');return;}
+  if(idA===idB){showToast('Bitte zwei verschiedene Chats wählen.','var(--gold)');return;}
   closeModal('compare-modal');
-  window.open(`/compare/${_lastShareId}/${other}`,'_blank');
+  window.open('/compare/'+idA+'/'+idB,'_blank');
 }
 
 // ── Modal ──────────────────────────────────────────────────────
