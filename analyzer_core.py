@@ -524,8 +524,8 @@ def wdev_col(items,arrow,color):
     m=items[0][2]; rows=""
     for w,ratio,cnt in items:
         pw=max(4,int(cnt/m*100)); rat=f"{ratio:.1f}×" if ratio<90 else "neu"
-        rows+=(f'<div style="display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px solid {BD}">'
-               f'<div style="width:120px;font-size:.88rem;color:{TXT};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{arrow} {esc(w)}</div>'
+        rows+=(f'<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid {BD}">'
+               f'<div style="width:90px;min-width:0;font-size:.85rem;color:{TXT};overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{arrow} {esc(w)}</div>'
                f'<div style="flex:1;height:5px;background:#161616;border-radius:2px;overflow:hidden">'
                f'<div style="height:5px;width:{pw}%;background:{color};border-radius:2px"></div></div>'
                f'<div style="min-width:60px;text-align:right;font-family:{MONO};font-size:.78rem;color:{MUT}">{rat} · {cnt}×</div>'
@@ -680,9 +680,10 @@ def run_analysis(file_bytes, chat_id):
     top_emo_html=("".join(emoji_bar_row(e,c,te_max) for e,c in te_items)
                   or f"<p style='color:{MUT};font-size:.88rem'>Keine Emojis gefunden.</p>")
     wdev_html=(f'<div style="font-size:.78rem;color:{MUT};margin-bottom:14px">Vergleich: erste ⅓ vs. letzte ⅓</div>'
-               f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">'
-               f'<div>'+sub_label("Aufsteigend",GRN)+wdev_col(rising,"↑",GRN)+'</div>'
-               f'<div>'+sub_label("Absteigend",RED)+wdev_col(falling,"↓",RED)+'</div></div>')
+               f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));'
+               f'gap:16px;overflow:hidden">'
+               f'<div style="min-width:0;overflow:hidden">'+sub_label("Aufsteigend",GRN)+wdev_col(rising,"↑",GRN)+'</div>'
+               f'<div style="min-width:0;overflow:hidden">'+sub_label("Absteigend",RED)+wdev_col(falling,"↓",RED)+'</div></div>')
     gag_max=gags[0][2] if gags else 1
     gag_html=("".join(
         f'<div style="display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid {BD}">'
@@ -727,7 +728,28 @@ def run_analysis(file_bytes, chat_id):
         stat_card("Sprecherwechsel",f"{sw_idx:.0f}%","wie oft der Sender wechselt"),
     )
 
-    return f"""<!doctype html>
+    # ── Stats dict for comparison / history ─────────────────
+    export_stats = {
+        "total":        total,
+        "active_days":  act_days,
+        "date_range":   date_range,
+        "avg_chars":    round(av_chars, 1),
+        "emoji_msgs":   emo_msgs,
+        "emoji_rate":   round(pct(emo_msgs, total), 1),
+        "q_msgs":       q_msgs,
+        "streak":       stl,
+        "top_word":     mcw,
+        "top_emoji":    te,
+        "top_phrase":   tphr,
+        "trend":        trend_label,
+        "act_score":    act_score,
+        "word_div":     round(wdiv, 3),
+        "mpd":          round(mpd, 1),
+        "cons_pct":     round(cons_pct, 1),
+        "senders":      {s: c for s, c in sender_counts.most_common()},
+    }
+
+    _html = f"""<!doctype html>
 <html lang="de">
 <head>
 <meta charset="utf-8">
@@ -794,3 +816,4 @@ def run_analysis(file_bytes, chat_id):
 </div>
 </body>
 </html>"""
+    return _html, export_stats
