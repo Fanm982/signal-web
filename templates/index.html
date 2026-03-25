@@ -199,22 +199,29 @@
 
   .report-nav {
     position: sticky; top: 0; z-index: 100;
-    background: rgba(10,10,10,.95);
+    background: rgba(10,10,10,.96);
     backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border-bottom: 1px solid var(--bd);
-    padding: 0 16px; padding-top: var(--safe-t);
+    padding-top: var(--safe-t);
   }
+  /* Title row */
+  .report-nav-title-row {
+    padding: 10px 16px 0;
+    overflow: hidden;
+  }
+  .report-nav-title {
+    font-weight: 700; color: var(--wht); font-size: .88rem;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  /* Buttons row — always fully visible */
   .report-nav-inner {
-    display: flex; align-items: center; gap: 8px;
-    height: 52px;
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 16px 10px;
     overflow-x: auto; -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
   .report-nav-inner::-webkit-scrollbar { display: none; }
-  .report-nav-title {
-    font-weight: 700; color: var(--wht); font-size: .9rem;
-    white-space: nowrap; flex-shrink: 0; margin-right: 4px;
-  }
   .btn-sm {
     padding: 7px 13px;
     font-family: 'Bricolage Grotesque', sans-serif;
@@ -350,13 +357,15 @@
 <!-- ─── REPORT PAGE ──────────────────────────────────────────── -->
 <div id="page-report">
   <div class="report-nav">
-    <div class="report-nav-inner">
+    <div class="report-nav-title-row">
       <div class="report-nav-title" id="report-title">Analyse</div>
+    </div>
+    <div class="report-nav-inner">
       <button class="btn-sm" onclick="backToUpload()">← Neu</button>
       <button class="btn-sm" id="share-btn" onclick="shareReport()">🔗 Teilen</button>
       <button class="btn-sm" id="compare-btn" onclick="openCompareModal()" style="display:none">⚖️ Vergleichen</button>
       <button class="btn-sm" onclick="printReport()">📄 PDF</button>
-      <button class="btn-sm gold" onclick="downloadReport()">⬇</button>
+      <button class="btn-sm gold" onclick="downloadReport()">⬇ HTML</button>
     </div>
   </div>
   <div id="report-body"></div>
