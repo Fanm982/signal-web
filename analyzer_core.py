@@ -206,29 +206,33 @@ def parse_export(file_bytes):
                 chat_id_to_recipient[cid] = rid
                 active_recipient_ids.add(rid)
 
-    # Dedup recipients
+    # Dedup recipients by id (keep the most informative entry)
     seen = {}
     for c in chats:
         k = c["chat_id"]
         if k not in seen: seen[k] = c
         elif c.get("display_name") and not seen[k].get("display_name"): seen[k] = c
+    all_recipients = list(seen.values())
 
-    if active_recipient_ids:
-        chats = [c for c in seen.values() if c["chat_id"] in active_recipient_ids]
-    else:
-        chats = list(seen.values())
-
-    # Number duplicate names
-    contact_chats = [c for c in chats if c.get("type") == "contact"]
-    name_count = Counter(c["display_name"] for c in contact_chats)
+    # Number duplicate contact names across ALL contacts — not only the active
+    # ones — so group members who have no 1:1 chat of their own still resolve
+    # to a real (and unique) name instead of "Unbekannt".
+    contacts_all = [c for c in all_recipients if c.get("type") == "contact"]
+    name_count = Counter(c["display_name"] for c in contacts_all)
     name_idx = {}
-    for c in contact_chats:
+    for c in contacts_all:
         n = c["display_name"]
         if name_count[n] > 1:
             name_idx[n] = name_idx.get(n, 0) + 1
             c["display_name"] = f"{n} {name_idx[n]}"
         for id_val in c.get("_ids", []):
             if id_val: raw_contacts[id_val] = c["display_name"]
+
+    # The chat picker only lists recipients that have an active chat entry.
+    if active_recipient_ids:
+        chats = [c for c in all_recipients if c["chat_id"] in active_recipient_ids]
+    else:
+        chats = all_recipients
 
     return account_name or "Ich", chats, raw_contacts, chat_id_to_recipient
 
