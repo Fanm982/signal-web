@@ -17,7 +17,7 @@ import requests as req_lib
 from flask import Flask, request, jsonify, render_template, Response, make_response
 from analyzer_core import (
     get_chat_list, run_analysis,
-    PAPER, INK, INK_SOFT, MUTE, LINE, LINE_SOFT, RUST, FOREST, AMBER,
+    PAPER, INK, INK_SOFT, MUTE, LINE, LINE_SOFT, RUST,
     DISPLAY, BODY, MONO, WHITE,
 )
 

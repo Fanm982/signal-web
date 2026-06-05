@@ -10,7 +10,6 @@ from datetime import datetime, timedelta
 # DESIGN TOKENS — warm editorial palette
 # ─────────────────────────────────────────────────────────────
 PAPER      = "#f7f3eb"
-PAPER_2    = "#f1ecdf"
 WHITE      = "#ffffff"
 INK        = "#1a1c25"
 INK_SOFT   = "#4a4d5b"
@@ -20,7 +19,6 @@ LINE_SOFT  = "#efe8d4"
 RUST       = "#c14e30"
 RUST_TINT  = "#f1d9d0"
 FOREST     = "#2f5044"
-FOREST_TINT= "#d8e0d8"
 AMBER      = "#b87c2c"
 INK_BLUE   = "#2a3e5d"
 
@@ -373,12 +371,6 @@ def hairline(margin="22px 0"):
     return f'<div style="height:1px;background:{LINE};margin:{margin}"></div>'
 
 
-def eyebrow(text, color=RUST):
-    return (f'<div style="font-family:{MONO};font-size:.66rem;'
-            f'letter-spacing:.18em;text-transform:uppercase;color:{color};'
-            f'margin-bottom:14px;font-weight:500">{esc(text)}</div>')
-
-
 def section_header(eb, title, kicker=""):
     kk = (f'<div style="font-family:{BODY};font-size:.9rem;color:{INK_SOFT};'
           f'margin-top:6px;max-width:520px;line-height:1.5">{esc(kicker)}</div>') if kicker else ""
@@ -389,18 +381,6 @@ def section_header(eb, title, kicker=""):
             f'font-weight:500;color:{INK};letter-spacing:-.02em;line-height:1.1;'
             f'font-variation-settings:&quot;SOFT&quot; 50,&quot;opsz&quot; 144">{esc(title)}</div>'
             f'{kk}</div>')
-
-
-def stat_minimal(label, value, sub=""):
-    sub_h = (f'<div style="font-family:{MONO};color:{MUTE};font-size:.7rem;'
-             f'margin-top:6px;letter-spacing:.04em">{esc(sub)}</div>') if sub else ""
-    return (f'<div style="padding:18px 0">'
-            f'<div style="font-family:{MONO};font-size:.66rem;letter-spacing:.14em;'
-            f'text-transform:uppercase;color:{MUTE}">{esc(label)}</div>'
-            f'<div style="font-family:{DISPLAY};font-size:2.1rem;font-weight:500;'
-            f'color:{INK};margin-top:6px;line-height:1;letter-spacing:-.02em;'
-            f'font-variation-settings:&quot;SOFT&quot; 100,&quot;opsz&quot; 144">{esc(str(value))}</div>'
-            f'{sub_h}</div>')
 
 
 def stat_card(label, value, sub=""):
@@ -421,25 +401,16 @@ def card_grid(*cards, mincol=158):
             f'gap:10px">' + "".join(cards) + '</div>')
 
 
-def hero_stats_row(*items):
-    """Stats divided by vertical hairlines, no card backgrounds."""
-    cells = "".join(items)
-    return (f'<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));'
-            f'gap:0;border-top:1px solid {LINE};border-bottom:1px solid {LINE}">'
-            f'<style>.hsr-cell{{padding:18px 16px;border-right:1px solid {LINE_SOFT};'
-            f'border-bottom:1px solid {LINE_SOFT}}}</style>'
-            f'{cells}</div>')
+def overview_band(*cells):
+    """Connected grid of the headline figures, separated by 1px hairlines."""
+    return f'<div class="ov-grid">{"".join(cells)}</div>'
 
 
-def hero_stat(label, value, sub=""):
-    sub_h = (f'<div style="font-family:{MONO};color:{MUTE};font-size:.7rem;'
-             f'margin-top:5px;letter-spacing:.04em">{esc(sub)}</div>') if sub else ""
-    return (f'<div class="hsr-cell">'
-            f'<div style="font-family:{MONO};font-size:.62rem;letter-spacing:.14em;'
-            f'text-transform:uppercase;color:{MUTE}">{esc(label)}</div>'
-            f'<div style="font-family:{DISPLAY};font-size:1.9rem;font-weight:500;'
-            f'color:{INK};margin-top:6px;line-height:1.05;letter-spacing:-.02em;'
-            f'font-variation-settings:&quot;SOFT&quot; 100,&quot;opsz&quot; 144">{esc(str(value))}</div>'
+def ov_cell(label, value, sub=""):
+    sub_h = f'<div class="ov-sub">{esc(sub)}</div>' if sub else ""
+    return (f'<div class="ov-cell">'
+            f'<div class="ov-label">{esc(label)}</div>'
+            f'<div class="ov-val">{esc(str(value))}</div>'
             f'{sub_h}</div>')
 
 
@@ -738,35 +709,6 @@ def wdev_col(items, arrow, color):
 
 
 # ─────────────────────────────────────────────────────────────
-# PERSONALITY SUMMARY
-# ─────────────────────────────────────────────────────────────
-def build_summary(total, mpd, av_chars, emo_msgs, night_msgs, q_msgs, sw_idx, trend_label):
-    parts = []
-    # Pace
-    if mpd >= 60: parts.append("ein lautes, lebhaftes Gespräch")
-    elif mpd >= 20: parts.append("ein aktiver Chat")
-    elif mpd >= 5: parts.append("ein ruhiger, beständiger Austausch")
-    else: parts.append("ein eher seltener Kontakt")
-    # Length
-    if av_chars > 80: parts.append("mit ausführlichen Nachrichten")
-    elif av_chars < 25: parts.append("voller knapper Zeilen")
-    # Emoji
-    if emo_msgs / max(total, 1) > 0.35: parts.append("emoji-reich")
-    # Questions
-    if q_msgs / max(total, 1) > 0.20: parts.append("voller Fragen")
-    # Night
-    if night_msgs / max(total, 1) > 0.20: parts.append("auch nachts wach")
-    # Speaker change
-    if sw_idx > 65: parts.append("ein echtes Ping-Pong")
-    elif sw_idx < 35: parts.append("eher monologisch")
-    base = ", ".join(parts)
-    if trend_label.startswith("↑"): base += " — und zuletzt am Wachsen."
-    elif trend_label.startswith("↓"): base += " — wird gerade leiser."
-    else: base += "."
-    return base[0].upper() + base[1:]
-
-
-# ─────────────────────────────────────────────────────────────
 # MAIN ANALYSIS
 # ─────────────────────────────────────────────────────────────
 def run_analysis(file_bytes, chat_id):
@@ -786,13 +728,11 @@ def run_analysis(file_bytes, chat_id):
     weekday_counts = Counter({"Montag": 0, "Dienstag": 0, "Mittwoch": 0,
                               "Donnerstag": 0, "Freitag": 0, "Samstag": 0, "Sonntag": 0})
     word_counts = Counter(); emoji_counts = Counter(); bigram_counts = Counter()
-    q_msgs = emo_msgs = night_msgs = weekend_msgs = 0
+    q_msgs = emo_msgs = night_msgs = 0
     lengths_chars = []
     person_data = defaultdict(lambda: {"count": 0, "chars": [], "word_lens": [],
                                        "emoji_n": 0, "q_n": 0, "words": Counter()})
     _last_s = None; _cur_b = 0; serie_counts = Counter()
-    first_msg_per_day = {}    # date_key → sender
-    last_msg_per_day = {}     # date_key → sender
 
     for idx, line in enumerate(lines):
         item = safe_loads(line)
@@ -834,12 +774,8 @@ def run_analysis(file_bytes, chat_id):
             try:
                 dt = datetime.fromtimestamp(ts/1000); dk = dt.strftime("%Y-%m-%d")
                 day_counts[dk] += 1; hour_counts[dt.hour] += 1
-                wd = day_de(dk); weekday_counts[wd] += 1
+                weekday_counts[day_de(dk)] += 1
                 if dt.hour >= 22 or dt.hour < 5: night_msgs += 1
-                if wd in ("Samstag", "Sonntag"): weekend_msgs += 1
-                # First / Last msg per day
-                if dk not in first_msg_per_day: first_msg_per_day[dk] = sender
-                last_msg_per_day[dk] = sender
             except: pass
 
         word_counts.update(tokens)
@@ -908,24 +844,10 @@ def run_analysis(file_bytes, chat_id):
             prev_ts_i = ts_m
 
     avg_resp = {s: avg(ts) for s, ts in resp_times_per.items() if len(ts) >= 8}
-    overall_resp_times = [t for ts in resp_times_per.values() for t in ts]
-    overall_resp_avg = avg(overall_resp_times) if overall_resp_times else 0
 
     rising, falling = word_development(sorted_msgs)
     gags = word_trends(sorted_msgs)
     sw_idx = speaker_change_rate(sorted_msgs)
-
-    # First / Last of day counts
-    first_of_day = Counter(first_msg_per_day.values())
-    last_of_day  = Counter(last_msg_per_day.values())
-    early_bird   = first_of_day.most_common(1)[0] if first_of_day else ("–", 0)
-    night_owl    = last_of_day.most_common(1)[0]  if last_of_day  else ("–", 0)
-
-    # Weekend share
-    weekend_pct = pct(weekend_msgs, total)
-
-    # Personality summary
-    personality = build_summary(total, mpd, av_chars, emo_msgs, night_msgs, q_msgs, sw_idx, trend_label)
 
     # ── Build HTML ────────────────────────────────────────────
     wd_ord = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"]
@@ -996,12 +918,14 @@ def run_analysis(file_bytes, chat_id):
         + _mini_stat("Nur 1× genutzt", nfmt(sum(1 for c in word_counts.values() if c == 1)), "Wörter")
         + '</div></div>')
 
-    # Top overview row (newspaper style)
-    top_row = hero_stats_row(
-        hero_stat("Nachrichten", nfmt(total), f"Ø {mpd:.1f} / Tag"),
-        hero_stat("Aktive Tage", nfmt(act_days), f"von {nfmt(total_days)}"),
-        hero_stat("Ø Länge", f"{av_chars:.0f}", "Zeichen"),
-        hero_stat("Längste Serie", f"{stl} Tg.", streak_sub or "in Folge"),
+    # Overview band — the six headline figures (newspaper style)
+    overview = overview_band(
+        ov_cell("Nachrichten", nfmt(total), f"Ø {mpd:.1f} pro Tag"),
+        ov_cell("Aktive Tage", nfmt(act_days), date_range),
+        ov_cell("Ø Länge", f"{av_chars:.0f}", "Zeichen pro Nachricht"),
+        ov_cell("Emoji-Nachrichten", nfmt(emo_msgs), f"{pct(emo_msgs,total):.1f}%"),
+        ov_cell("Fragen", nfmt(q_msgs), f"{pct(q_msgs,total):.1f}%"),
+        ov_cell("Längste Serie", f"{stl} Tage", streak_sub or "in Folge"),
     )
 
     # Highlight cards grid
@@ -1010,21 +934,16 @@ def run_analysis(file_bytes, chat_id):
         stat_card("Aktivste Stunde", f"{mah[0]:02d}:00", f"{mah[1]} Nachrichten"),
         stat_card("Aktivster Wochentag", maw[0], f"{maw[1]} Nachrichten"),
         stat_card("Ruhigster Wochentag", quiet_w, f"{weekday_counts.get(quiet_w,0)} Nachrichten"),
-        stat_card("Nacht-Nachrichten", nfmt(night_msgs), f"{pct(night_msgs,total):.1f}% (22–05)"),
-        stat_card("Wochenend-Anteil", f"{weekend_pct:.0f}%", f"{nfmt(weekend_msgs)} Nachrichten"),
-        stat_card("Größte Pause", f"{max_gap} Tg.", "ohne Nachricht"),
+        stat_card("Nacht-Nachrichten", nfmt(night_msgs), f"{pct(night_msgs,total):.1f}% (22–05 Uhr)"),
+        stat_card("Größte Pause", f"{max_gap} Tage", "ohne Nachricht"),
         stat_card("Häufigstes Wort", mcw, f"{mcwn}× verwendet"),
         stat_card("Lieblingsphrase", tphr, "häufigstes Wortpaar"),
         stat_card("Top-Emoji", te, f"{ten}× verwendet"),
-        stat_card("Fragen", nfmt(q_msgs), f"{pct(q_msgs,total):.1f}% aller Nachr."),
-        stat_card("Emoji-Anteil", f"{pct(emo_msgs,total):.0f}%", f"{nfmt(emo_msgs)} mit Emoji"),
-        stat_card("Trend", trend_label.replace("↑ ", "").replace("↓ ", "").replace("→ ", ""), "Verlauf gesamt"),
-        stat_card("Sprecherwechsel", f"{sw_idx:.0f}%", "wechselnder Sender"),
+        stat_card("Trend", trend_label, "erste vs. zweite Hälfte"),
         stat_card("Mehrfach-Schreiber",
                   serie_counts.most_common(1)[0][0] if serie_counts else "–",
-                  f"{serie_counts.most_common(1)[0][1]} Serien à 3+" if serie_counts else ""),
-        stat_card("Eröffnet den Tag", early_bird[0], f"{early_bird[1]}× zuerst") if is_group or early_bird[0] != "–" else stat_card("Eröffnet den Tag", "–", ""),
-        stat_card("Schließt den Tag", night_owl[0], f"{night_owl[1]}× zuletzt") if is_group or night_owl[0] != "–" else stat_card("Schließt den Tag", "–", ""),
+                  f"{serie_counts.most_common(1)[0][1]} Serien à 3+" if serie_counts else "keine"),
+        stat_card("Sprecherwechsel", f"{sw_idx:.0f}%", "wie oft der Sender wechselt"),
     )
 
     # Privacy footer
@@ -1153,9 +1072,17 @@ def run_analysis(file_bytes, chat_id):
   .cover-meta{{font-family:{MONO};font-size:.74rem;color:{MUTE};margin-top:22px;
               letter-spacing:.04em}}
   .cover-meta strong{{color:{INK};font-weight:500}}
-  .personality{{font-family:{DISPLAY};font-style:italic;font-size:clamp(1.15rem,3vw,1.45rem);
-    color:{INK_SOFT};line-height:1.5;margin-top:18px;max-width:640px;
-    font-variation-settings:"SOFT" 30,"opsz" 32}}
+  .ov-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
+    background:{LINE};border:1px solid {LINE};border-radius:14px;overflow:hidden;margin-top:4px}}
+  .ov-cell{{background:{WHITE};padding:18px 18px 16px;min-width:0}}
+  .ov-label{{font-family:{MONO};font-size:.62rem;letter-spacing:.14em;
+    text-transform:uppercase;color:{MUTE}}}
+  .ov-val{{font-family:{DISPLAY};font-size:1.9rem;font-weight:500;color:{INK};
+    margin-top:6px;line-height:1.05;letter-spacing:-.02em;
+    font-variation-settings:"SOFT" 100,"opsz" 144;word-break:break-word}}
+  .ov-sub{{font-family:{MONO};color:{MUTE};font-size:.7rem;margin-top:5px;
+    letter-spacing:.04em;line-height:1.45;word-break:break-word}}
+  @media(max-width:560px){{.ov-grid{{grid-template-columns:repeat(2,1fr)}}}}
   details summary::-webkit-details-marker{{display:none}}
   details>summary{{outline:none;-webkit-tap-highlight-color:transparent}}
 
@@ -1180,14 +1107,13 @@ def run_analysis(file_bytes, chat_id):
   <div class="cover">
     <div class="cover-eyebrow">Signal · Eine Auswertung</div>
     <h1>{esc(chat_name)}</h1>
-    <div class="personality">{esc(personality)}</div>
     <div class="cover-meta">
       <strong>{nfmt(total)}</strong> Nachrichten &nbsp;·&nbsp;
       <strong>{esc(date_range)}</strong>
     </div>
   </div>
 
-  {top_row}
+  {overview}
 
   {pull_quote(f'„{nfmt(total)} Nachrichten in {nfmt(act_days)} aktiven Tagen — '
               f'das macht im Schnitt {mpd:.1f} pro aktivem Tag.“', 'Die Zahlen')}
